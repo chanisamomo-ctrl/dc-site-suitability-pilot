@@ -1,0 +1,15 @@
+# ไม่ upload ไฟล์ Excel (มีข้อมูล raw ที่เป็นความลับ)
+*.xlsx
+*.xlsm
+*.xls
+
+# Python
+__pycache__/
+*.pyc
+.env
+venv/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
