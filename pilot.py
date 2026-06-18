@@ -24,43 +24,74 @@ st.set_page_config(
 # CSS
 # ────────────────────────────────────────────────
 st.markdown("""
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+/* ── Global font ── */
+*, body, .stApp, [class*="st-"], [data-testid] {
+    font-family: 'DB Heavent', 'Sarabun', 'Noto Sans Thai', sans-serif !important;
+}
 #MainMenu, footer, header {visibility: hidden;}
 .block-container {padding-top: 0rem; padding-bottom: 0.5rem;}
+
+/* ── Top Nav ── */
 .topnav {
-    background:#0A1628; color:white; padding:10px 24px;
+    background:#0A1628; color:white; padding:12px 28px;
     display:flex; align-items:center; justify-content:space-between;
-    border-bottom:2px solid #1A9B6C;
+    border-bottom:3px solid #1A9B6C; margin-bottom:4px;
 }
-.topnav-title {font-size:1rem; font-weight:700; color:#fff; letter-spacing:.5px}
-.topnav-links {display:flex; gap:18px; font-size:.85rem; color:#9DC3E6; cursor:pointer}
+.topnav-title {font-size:1.1rem; font-weight:700; color:#fff; letter-spacing:.3px}
+.topnav-sub   {font-size:.82rem; color:#9DC3E6; margin-top:2px}
+
+/* ── Section header ── */
 .section-header {
-    font-size:.72rem; font-weight:700; color:#1A9B6C;
-    text-transform:uppercase; letter-spacing:.08em;
-    margin-bottom:6px; margin-top:10px;
+    font-size:.82rem; font-weight:700; color:#1A9B6C;
+    text-transform:uppercase; letter-spacing:.06em;
+    border-left:3px solid #1A9B6C; padding-left:8px;
+    margin-bottom:8px; margin-top:14px;
 }
-.filter-panel {background:#F5F8FC; border-radius:10px; padding:14px 16px; border:1px solid #D0DFF0;}
+
+/* ── Filter panel ── */
+.filter-panel {
+    background:#F5F8FC; border-radius:12px;
+    padding:16px 18px; border:1px solid #D0DFF0;
+}
+
+/* ── Score card box ── */
 .score-box {
     background:linear-gradient(135deg,#0D2137 0%,#1A3A5C 100%);
-    border-radius:12px; padding:16px 20px; margin-bottom:10px; border:1px solid #2E75B6;
+    border-radius:14px; padding:18px 22px; margin-bottom:12px;
+    border:1px solid #2E75B6;
 }
-.score-big  {font-size:3rem; font-weight:800; color:#fff; line-height:1}
-.score-label{font-size:.72rem; color:#9DC3E6; margin-bottom:4px; text-transform:uppercase; letter-spacing:.06em}
-.gate-pass  {display:inline-block;background:#1A9B6C;color:white;padding:4px 14px;border-radius:6px;font-size:.82rem;font-weight:700;}
-.gate-review{display:inline-block;background:#FFC000;color:#000; padding:4px 14px;border-radius:6px;font-size:.82rem;font-weight:700;}
-.gate-no    {display:inline-block;background:#E04040;color:white;padding:4px 14px;border-radius:6px;font-size:.82rem;font-weight:700;}
-.chip-green {background:#E6F7EF;color:#1A9B6C;border:1px solid #1A9B6C;padding:3px 10px;border-radius:12px;font-size:.78rem;margin:2px;display:inline-block}
-.chip-red   {background:#FFF0F0;color:#E04040;border:1px solid #E04040;padding:3px 10px;border-radius:12px;font-size:.78rem;margin:2px;display:inline-block}
-.chip-orange{background:#FFF8E6;color:#E07B00;border:1px solid #E07B00;padding:3px 10px;border-radius:12px;font-size:.78rem;margin:2px;display:inline-block}
+.score-big  {font-size:3.2rem; font-weight:800; color:#fff; line-height:1}
+.score-label{font-size:.82rem; color:#9DC3E6; margin-bottom:4px; font-weight:600}
+
+/* ── Gate badges ── */
+.gate-pass  {display:inline-block;background:#1A9B6C;color:white;
+             padding:5px 16px;border-radius:20px;font-size:.88rem;font-weight:700;}
+.gate-review{display:inline-block;background:#FFC000;color:#000;
+             padding:5px 16px;border-radius:20px;font-size:.88rem;font-weight:700;}
+.gate-no    {display:inline-block;background:#E04040;color:white;
+             padding:5px 16px;border-radius:20px;font-size:.88rem;font-weight:700;}
+
+/* ── Chips ── */
+.chip-green {background:#E6F7EF;color:#1A9B6C;border:1px solid #B2DFD1;
+             padding:4px 12px;border-radius:20px;font-size:.84rem;margin:3px;display:inline-block}
+.chip-red   {background:#FFF0F0;color:#C0392B;border:1px solid #F5B5B5;
+             padding:4px 12px;border-radius:20px;font-size:.84rem;margin:3px;display:inline-block}
+.chip-orange{background:#FFF8E6;color:#D0700A;border:1px solid #FACEAA;
+             padding:4px 12px;border-radius:20px;font-size:.84rem;margin:3px;display:inline-block}
+
+/* ── Welcome box ── */
 .welcome-box {
-    background:linear-gradient(135deg,#F0F7FF 0%,#E6F4FF 100%);
-    border-radius:14px; padding:28px 24px; text-align:center;
-    border:2px dashed #9DC3E6; margin-top:8px;
+    background:linear-gradient(135deg,#EBF4FF 0%,#E2F4ED 100%);
+    border-radius:16px; padding:30px 24px; text-align:center;
+    border:2px dashed #9DC3E6; margin-top:10px;
 }
-.feat-card {background:#F5F8FC;border-radius:10px;padding:14px;border-left:4px solid #1A9B6C;text-align:center;}
-.feat-icon  {font-size:1.8rem;margin-bottom:6px}
-.feat-title {font-weight:700;color:#0A1628;font-size:.9rem}
-.feat-desc  {font-size:.78rem;color:#555;margin-top:4px;line-height:1.4}
+
+/* ── Bar label text ── */
+.dim-label {font-size:.9rem; font-weight:600; color:#222}
+.dim-value {font-size:.9rem; font-weight:700}
+.dim-sub   {font-size:.76rem; color:#999; text-align:right}
 </style>
 """, unsafe_allow_html=True)
 
@@ -260,38 +291,37 @@ def render_scorecard(row):
     gc    = GRADE_COLOR.get(grade,"#888")
 
     st.markdown(f"""
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-      <div>
-        <div style="font-size:.68rem;color:#888;text-transform:uppercase;letter-spacing:.08em">Province Scorecard</div>
-        <div style="font-size:1.7rem;font-weight:800;color:#0A1628;line-height:1.1">{th}</div>
-        <div style="font-size:.82rem;color:#555">{en} · อันดับ <b>#{rank}</b> จาก 77 จังหวัด</div>
+    <div style="margin-bottom:10px">
+      <div style="font-size:.82rem;color:#888;margin-bottom:2px">Province Scorecard</div>
+      <div style="font-size:1.9rem;font-weight:800;color:#0A1628;line-height:1.15">{th}</div>
+      <div style="font-size:.92rem;color:#555;margin-top:2px">
+        {en} &nbsp;·&nbsp; อันดับ <b>#{rank}</b> จาก 77 จังหวัด
       </div>
-      <div style="padding-top:4px">{GATE_HTML.get(gate,'')}</div>
+      <div style="margin-top:6px">{GATE_HTML.get(gate,'')}</div>
     </div>""", unsafe_allow_html=True)
 
     st.markdown(f"""
     <div class="score-box">
-      <div class="score-label">Overall Score</div>
-      <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap">
+      <div class="score-label">คะแนนรวม (Overall Score)</div>
+      <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-top:4px">
         <div class="score-big">{score:.2f}</div>
-        <div style="padding-bottom:6px">
-          <span style="background:{tc};color:white;padding:4px 13px;border-radius:20px;
-                       font-size:.82rem;font-weight:700;display:inline-block">{tier}</span><br>
-          <span style="background:{gc};color:white;padding:2px 10px;border-radius:12px;
-                       font-size:.78rem;font-weight:700;display:inline-block;margin-top:5px">Grade {grade}</span>
+        <div style="padding-bottom:6px;display:flex;flex-direction:column;gap:6px">
+          <span style="background:{tc};color:white;padding:5px 16px;border-radius:20px;
+                       font-size:.9rem;font-weight:700">{tier}</span>
+          <span style="background:{gc};color:white;padding:4px 14px;border-radius:20px;
+                       font-size:.88rem;font-weight:700">Grade {grade}</span>
         </div>
       </div>
     </div>""", unsafe_allow_html=True)
 
     badges = []
     if row["EEC"]:       badges.append("✅ EEC Zone")
-    if row["Strategic"]: badges.append("🌐 Strategic Digital Province")
+    if row["Strategic"]: badges.append("🌐 Strategic Province")
     if badges:
         st.markdown(" ".join([f'<span class="chip-green">{b}</span>' for b in badges]),
                     unsafe_allow_html=True)
 
-    st.markdown('<div class="section-header">คะแนนรายมิติ (% จากคะแนนสูงสุด)</div>',
-                unsafe_allow_html=True)
+    st.markdown('<div class="section-header">คะแนนรายมิติ</div>', unsafe_allow_html=True)
     for k in DIM_KEYS:
         pct   = float(row[f"{k}_pct"])
         raw_w = float(row[k])
@@ -299,28 +329,31 @@ def render_scorecard(row):
         color = DIM_COLORS[k]
         label = DIM_LABELS[k]
         st.markdown(f"""
-        <div style="margin-bottom:7px">
-          <div style="display:flex;justify-content:space-between;margin-bottom:2px">
-            <span style="font-size:.83rem;font-weight:600;color:#222">{label}</span>
-            <span style="font-size:.83rem;font-weight:700;color:{color}">{pct:.1f}</span>
+        <div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+            <span class="dim-label">{label}</span>
+            <span class="dim-value" style="color:{color}">{pct:.0f} <span style="font-size:.76rem;color:#aaa">/ 100</span></span>
           </div>
-          <div style="background:#E4ECF5;border-radius:6px;height:10px;overflow:hidden">
-            <div style="width:{max(pct,2)}%;background:{color};height:100%;border-radius:6px"></div>
+          <div style="background:#E4ECF5;border-radius:8px;height:11px;overflow:hidden">
+            <div style="width:{max(pct,2)}%;background:{color};height:100%;border-radius:8px;
+                        transition:width .4s ease"></div>
           </div>
-          <div style="font-size:.68rem;color:#999;text-align:right">{raw_w:.2f} / {mx}</div>
+          <div class="dim-sub">น้ำหนักคะแนน: {raw_w:.2f} / {mx}</div>
         </div>""", unsafe_allow_html=True)
 
     st.markdown('<div class="section-header">จุดแข็ง / จุดอ่อน</div>', unsafe_allow_html=True)
-    strengths  = [s.strip() for s in str(row.get("strengths","")).split(",") if s.strip() not in ("","nan","—")]
-    weaknesses = [w.strip() for w in str(row.get("weaknesses","")).split(",") if w.strip() not in ("","nan","—")]
+    strengths  = [s.strip() for s in str(row.get("strengths","")).split(",") if s.strip() not in ("","nan","—","-")]
+    weaknesses = [w.strip() for w in str(row.get("weaknesses","")).split(",") if w.strip() not in ("","nan","—","-")]
     if strengths:
         chips = " ".join([f'<span class="chip-green">💪 {s}</span>' for s in strengths])
-        st.markdown(f'<div><b style="font-size:.72rem;color:#1A9B6C">จุดแข็ง</b><br>{chips}</div>',
+        st.markdown(f'<div style="margin-bottom:4px"><b style="font-size:.84rem;color:#1A9B6C">จุดแข็ง</b><br>{chips}</div>',
                     unsafe_allow_html=True)
     if weaknesses:
         chips = " ".join([f'<span class="chip-red">⚠️ {w}</span>' for w in weaknesses])
-        st.markdown(f'<div style="margin-top:4px"><b style="font-size:.72rem;color:#E04040">จุดอ่อน</b><br>{chips}</div>',
+        st.markdown(f'<div style="margin-top:4px"><b style="font-size:.84rem;color:#C0392B">จุดอ่อน</b><br>{chips}</div>',
                     unsafe_allow_html=True)
+    if not strengths and not weaknesses:
+        st.markdown('<div style="font-size:.88rem;color:#aaa">— คะแนนอยู่ในช่วงปานกลางทุกมิติ —</div>', unsafe_allow_html=True)
     note = str(row.get("analyst_note","")).strip()
     if note and note != "nan":
         st.markdown(f'<div style="margin-top:6px"><span class="chip-orange">📝 {note}</span></div>',
@@ -345,17 +378,18 @@ def render_scorecard(row):
 def render_welcome_panel(df_all):
     st.markdown("""
     <div class="welcome-box">
-      <div style="font-size:2.5rem;margin-bottom:8px">🗺️</div>
-      <div style="font-size:1.1rem;font-weight:700;color:#0A1628;margin-bottom:6px">
+      <div style="font-size:2.8rem;margin-bottom:10px">🗺️</div>
+      <div style="font-size:1.2rem;font-weight:800;color:#0A1628;margin-bottom:8px">
         เลือกจังหวัดเพื่อดู Scorecard
       </div>
-      <div style="font-size:.85rem;color:#555;line-height:1.6">
-        คลิก <b>Marker</b> บนแผนที่ หรือเลือกจาก Dropdown ด้านซ้าย<br>
-        ข้อมูลครบ <b>77 จังหวัด</b> · เกณฑ์ v2.0
+      <div style="font-size:.95rem;color:#555;line-height:1.8">
+        เลือกจากช่อง Dropdown ด้านซ้าย<br>
+        หรือชี้เม้าส์บนแผนที่เพื่อดูคะแนน<br>
+        ข้อมูลครบ <b>77 จังหวัด</b>
       </div>
     </div>""", unsafe_allow_html=True)
 
-    st.markdown('<div class="section-header" style="margin-top:14px">Top 5 จังหวัด</div>',
+    st.markdown('<div class="section-header" style="margin-top:16px">🏆 Top 5 จังหวัด</div>',
                 unsafe_allow_html=True)
     top5 = df_all.head(5)
     clicked = None
@@ -365,12 +399,16 @@ def render_welcome_panel(df_all):
         col_info, col_btn = st.columns([3,1])
         with col_info:
             st.markdown(f"""
-            <div style="padding:6px 0;border-bottom:1px solid #EEE">
-              <span style="font-weight:700;color:#0A1628">{row['province_name_th']}</span>
-              <span style="color:#888;font-size:.8rem"> {row['province_name_en']}</span><br>
-              <span style="font-size:1.1rem;font-weight:800;color:{tc}">{row['overall_score']:.2f}</span>
-              <span style="background:{gc};color:white;padding:1px 7px;border-radius:8px;
-                           font-size:.72rem;font-weight:700;margin-left:4px">Grade {row['grade']}</span>
+            <div style="padding:8px 4px;border-bottom:1px solid #E8EEF4">
+              <div style="font-size:1rem;font-weight:700;color:#0A1628">
+                #{int(row['rank_overall'])} {row['province_name_th']}
+                <span style="font-size:.84rem;color:#888;font-weight:400"> {row['province_name_en']}</span>
+              </div>
+              <div style="margin-top:3px">
+                <span style="font-size:1.15rem;font-weight:800;color:{tc}">{row['overall_score']:.2f}</span>
+                <span style="background:{gc};color:white;padding:2px 9px;border-radius:10px;
+                             font-size:.8rem;font-weight:700;margin-left:6px">Grade {row['grade']}</span>
+              </div>
             </div>""", unsafe_allow_html=True)
         with col_btn:
             if st.button("เลือก", key=f"top5_{row['province_name_th']}", use_container_width=True):
@@ -409,11 +447,9 @@ def render_radar(df_sel):
 def main():
     st.markdown("""
     <div class="topnav">
-      <div class="topnav-title">🗺️ Data Center Site Selection · Thailand</div>
-      <div class="topnav-links">
-        <span>📖 คู่มือการใช้งาน</span>
-        <span>📤 ส่งออกข้อมูล</span>
-        <span>👤 ผู้ใช้งาน</span>
+      <div>
+        <div class="topnav-title">🗺️ Data Center Site Selection · Thailand</div>
+        <div class="topnav-sub">วิเคราะห์ความเหมาะสม 77 จังหวัด · เกณฑ์ v2.0</div>
       </div>
     </div>""", unsafe_allow_html=True)
 
@@ -434,8 +470,7 @@ def main():
     # ═══════ LEFT PANEL ═══════
     with col_left:
         st.markdown('<div class="filter-panel">', unsafe_allow_html=True)
-        st.markdown("#### 🔎 ค้นหาและกรองข้อมูล")
-        st.caption("ข้อมูล 77 จังหวัด · เกณฑ์ v2.0")
+        st.markdown("#### 🔎 ค้นหาจังหวัด")
 
         all_provinces = ["— กรุณาเลือกจังหวัด —"] + df_all["province_name_th"].tolist()
         cur_idx = 0
