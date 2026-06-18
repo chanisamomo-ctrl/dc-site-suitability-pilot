@@ -38,12 +38,12 @@ st.markdown("""
     display:flex; align-items:center; justify-content:space-between;
     border-bottom:3px solid #1A9B6C; margin-bottom:4px;
 }
-.topnav-title {font-size:1.1rem; font-weight:700; color:#fff; letter-spacing:.3px}
-.topnav-sub   {font-size:.82rem; color:#9DC3E6; margin-top:2px}
+.topnav-title {font-size:1.3rem; font-weight:700; color:#fff; letter-spacing:.3px}
+.topnav-sub   {font-size:.98rem; color:#9DC3E6; margin-top:2px}
 
 /* ── Section header ── */
 .section-header {
-    font-size:.82rem; font-weight:700; color:#1A9B6C;
+    font-size:1rem; font-weight:700; color:#1A9B6C;
     text-transform:uppercase; letter-spacing:.06em;
     border-left:3px solid #1A9B6C; padding-left:8px;
     margin-bottom:8px; margin-top:14px;
@@ -53,44 +53,46 @@ st.markdown("""
 .filter-panel {
     background:#F5F8FC; border-radius:12px;
     padding:16px 18px; border:1px solid #D0DFF0;
+    font-size:1rem;
 }
 
 /* ── Score card box ── */
 .score-box {
     background:linear-gradient(135deg,#0D2137 0%,#1A3A5C 100%);
-    border-radius:14px; padding:18px 22px; margin-bottom:12px;
+    border-radius:14px; padding:20px 24px; margin-bottom:12px;
     border:1px solid #2E75B6;
 }
-.score-big  {font-size:3.2rem; font-weight:800; color:#fff; line-height:1}
-.score-label{font-size:.82rem; color:#9DC3E6; margin-bottom:4px; font-weight:600}
+.score-big  {font-size:3.6rem; font-weight:800; color:#fff; line-height:1}
+.score-label{font-size:1rem; color:#9DC3E6; margin-bottom:4px; font-weight:600}
 
 /* ── Gate badges ── */
 .gate-pass  {display:inline-block;background:#1A9B6C;color:white;
-             padding:5px 16px;border-radius:20px;font-size:.88rem;font-weight:700;}
+             padding:6px 18px;border-radius:20px;font-size:1rem;font-weight:700;}
 .gate-review{display:inline-block;background:#FFC000;color:#000;
-             padding:5px 16px;border-radius:20px;font-size:.88rem;font-weight:700;}
+             padding:6px 18px;border-radius:20px;font-size:1rem;font-weight:700;}
 .gate-no    {display:inline-block;background:#E04040;color:white;
-             padding:5px 16px;border-radius:20px;font-size:.88rem;font-weight:700;}
+             padding:6px 18px;border-radius:20px;font-size:1rem;font-weight:700;}
 
 /* ── Chips ── */
 .chip-green {background:#E6F7EF;color:#1A9B6C;border:1px solid #B2DFD1;
-             padding:4px 12px;border-radius:20px;font-size:.84rem;margin:3px;display:inline-block}
+             padding:5px 14px;border-radius:20px;font-size:.98rem;margin:3px;display:inline-block}
 .chip-red   {background:#FFF0F0;color:#C0392B;border:1px solid #F5B5B5;
-             padding:4px 12px;border-radius:20px;font-size:.84rem;margin:3px;display:inline-block}
+             padding:5px 14px;border-radius:20px;font-size:.98rem;margin:3px;display:inline-block}
 .chip-orange{background:#FFF8E6;color:#D0700A;border:1px solid #FACEAA;
-             padding:4px 12px;border-radius:20px;font-size:.84rem;margin:3px;display:inline-block}
+             padding:5px 14px;border-radius:20px;font-size:.98rem;margin:3px;display:inline-block}
 
 /* ── Welcome box ── */
 .welcome-box {
     background:linear-gradient(135deg,#EBF4FF 0%,#E2F4ED 100%);
     border-radius:16px; padding:30px 24px; text-align:center;
     border:2px dashed #9DC3E6; margin-top:10px;
+    font-size:1rem;
 }
 
 /* ── Bar label text ── */
-.dim-label {font-size:.9rem; font-weight:600; color:#222}
-.dim-value {font-size:.9rem; font-weight:700}
-.dim-sub   {font-size:.76rem; color:#999; text-align:right}
+.dim-label {font-size:1.02rem; font-weight:600; color:#222}
+.dim-value {font-size:1.02rem; font-weight:700}
+.dim-sub   {font-size:.86rem; color:#999; text-align:right}
 </style>
 """, unsafe_allow_html=True)
 
@@ -231,16 +233,16 @@ def build_map(df_all, geo, selected_th):
             lat, lon = float(row["lat"]), float(row["lng"])
             popup_html = f"""
             <div style="font-family:sans-serif;min-width:210px">
-              <b style="font-size:1rem;color:#0A1628">{selected_th}</b>&nbsp;
-              <span style="color:#888;font-size:.8rem">{row['province_name_en']}</span>
+              <b style="font-size:1.12rem;color:#0A1628">{selected_th}</b>&nbsp;
+              <span style="color:#888;font-size:.95rem">{row['province_name_en']}</span>
               <hr style="margin:5px 0">
-              <div style="font-size:1.5rem;font-weight:800;color:#1A9B6C">{row['overall_score']:.2f}</div>
-              <div style="font-size:.78rem;color:#555;margin-bottom:4px">Overall Score</div>
+              <div style="font-size:1.75rem;font-weight:800;color:#1A9B6C">{row['overall_score']:.2f}</div>
+              <div style="font-size:.94rem;color:#555;margin-bottom:4px">Overall Score</div>
               <span style="background:{TIER_FILL.get(row['tier'],'#888')};color:white;
-                           padding:2px 10px;border-radius:12px;font-size:.78rem;font-weight:700">
+                           padding:2px 10px;border-radius:12px;font-size:.94rem;font-weight:700">
                 {row['tier']}
               </span>&nbsp;
-              <span style="font-size:.78rem;color:#333">Grade <b>{row['grade']}</b></span>
+              <span style="font-size:.94rem;color:#333">Grade <b>{row['grade']}</b></span>
             </div>"""
             folium.Marker(
                 [lat, lon],
@@ -257,15 +259,15 @@ def build_map(df_all, geo, selected_th):
             tc  = TIER_FILL.get(row["tier"],"#888")
             leg = f"""<div style="position:fixed;bottom:24px;left:24px;z-index:1000;background:white;
                         padding:10px 14px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.2);
-                        font-family:sans-serif;font-size:.82rem">
+                        font-family:sans-serif;font-size:.96rem">
                       <b style="color:#0A1628">จังหวัดที่เลือก</b><br>
                       <span style="color:{tc}">■</span> <b>{selected_th}</b> · {row['tier']}<br>
-                      <span style="font-size:.75rem;color:#888">Overall: {row['overall_score']:.2f}</span>
+                      <span style="font-size:.91rem;color:#888">Overall: {row['overall_score']:.2f}</span>
                     </div>"""
     else:
         leg = """<div style="position:fixed;bottom:24px;left:24px;z-index:1000;background:white;
                     padding:10px 14px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.2);
-                    font-family:sans-serif;font-size:.82rem">
+                    font-family:sans-serif;font-size:.96rem">
                   <b style="color:#0A1628">ระดับศักยภาพ</b><br>
                   <span style="color:#1A9B6C">■</span> Tier 1 – Prime<br>
                   <span style="color:#5BB8A4">■</span> Tier 2 – Suitable<br>
@@ -291,9 +293,9 @@ def render_scorecard(row):
 
     st.markdown(f"""
     <div style="margin-bottom:10px">
-      <div style="font-size:.82rem;color:#888;margin-bottom:2px">Province Scorecard</div>
-      <div style="font-size:1.9rem;font-weight:800;color:#0A1628;line-height:1.15">{th}</div>
-      <div style="font-size:.92rem;color:#555;margin-top:2px">
+      <div style="font-size:.96rem;color:#888;margin-bottom:2px">Province Scorecard</div>
+      <div style="font-size:2.1rem;font-weight:800;color:#0A1628;line-height:1.15">{th}</div>
+      <div style="font-size:1.04rem;color:#555;margin-top:2px">
         {en} &nbsp;·&nbsp; อันดับ <b>#{rank}</b> จาก 77 จังหวัด
       </div>
       <div style="margin-top:6px">{GATE_HTML.get(gate,'')}</div>
@@ -306,9 +308,9 @@ def render_scorecard(row):
         <div class="score-big">{score:.2f}</div>
         <div style="padding-bottom:6px;display:flex;flex-direction:column;gap:6px">
           <span style="background:{tc};color:white;padding:5px 16px;border-radius:20px;
-                       font-size:.9rem;font-weight:700">{tier}</span>
+                       font-size:1.02rem;font-weight:700">{tier}</span>
           <span style="background:{gc};color:white;padding:4px 14px;border-radius:20px;
-                       font-size:.88rem;font-weight:700">Grade {grade}</span>
+                       font-size:1rem;font-weight:700">Grade {grade}</span>
         </div>
       </div>
     </div>""", unsafe_allow_html=True)
@@ -331,7 +333,7 @@ def render_scorecard(row):
         <div style="margin-bottom:10px">
           <div style="display:flex;justify-content:space-between;margin-bottom:3px">
             <span class="dim-label">{label}</span>
-            <span class="dim-value" style="color:{color}">{pct:.0f} <span style="font-size:.76rem;color:#aaa">/ 100</span></span>
+            <span class="dim-value" style="color:{color}">{pct:.0f} <span style="font-size:.92rem;color:#aaa">/ 100</span></span>
           </div>
           <div style="background:#E4ECF5;border-radius:8px;height:11px;overflow:hidden">
             <div style="width:{max(pct,2)}%;background:{color};height:100%;border-radius:8px;
@@ -345,14 +347,14 @@ def render_scorecard(row):
     weaknesses = [w.strip() for w in str(row.get("weaknesses","")).split(",") if w.strip() not in ("","nan","—","-")]
     if strengths:
         chips = " ".join([f'<span class="chip-green">💪 {s}</span>' for s in strengths])
-        st.markdown(f'<div style="margin-bottom:4px"><b style="font-size:.84rem;color:#1A9B6C">จุดแข็ง</b><br>{chips}</div>',
+        st.markdown(f'<div style="margin-bottom:4px"><b style="font-size:.97rem;color:#1A9B6C">จุดแข็ง</b><br>{chips}</div>',
                     unsafe_allow_html=True)
     if weaknesses:
         chips = " ".join([f'<span class="chip-red">⚠️ {w}</span>' for w in weaknesses])
-        st.markdown(f'<div style="margin-top:4px"><b style="font-size:.84rem;color:#C0392B">จุดอ่อน</b><br>{chips}</div>',
+        st.markdown(f'<div style="margin-top:4px"><b style="font-size:.97rem;color:#C0392B">จุดอ่อน</b><br>{chips}</div>',
                     unsafe_allow_html=True)
     if not strengths and not weaknesses:
-        st.markdown('<div style="font-size:.88rem;color:#aaa">— คะแนนอยู่ในช่วงปานกลางทุกมิติ —</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-size:1rem;color:#aaa">— คะแนนอยู่ในช่วงปานกลางทุกมิติ —</div>', unsafe_allow_html=True)
     note = str(row.get("analyst_note","")).strip()
     if note and note != "nan":
         st.markdown(f'<div style="margin-top:6px"><span class="chip-orange">📝 {note}</span></div>',
@@ -377,11 +379,11 @@ def render_scorecard(row):
 def render_welcome_panel(df_all):
     st.markdown("""
     <div class="welcome-box">
-      <div style="font-size:2.8rem;margin-bottom:10px">🗺️</div>
-      <div style="font-size:1.2rem;font-weight:800;color:#0A1628;margin-bottom:8px">
+      <div style="font-size:3rem;margin-bottom:10px">🗺️</div>
+      <div style="font-size:1.35rem;font-weight:800;color:#0A1628;margin-bottom:8px">
         เลือกจังหวัดเพื่อดู Scorecard
       </div>
-      <div style="font-size:.95rem;color:#555;line-height:1.8">
+      <div style="font-size:1.06rem;color:#555;line-height:1.8">
         เลือกจากช่อง Dropdown ด้านซ้าย<br>
         หรือชี้เม้าส์บนแผนที่เพื่อดูคะแนน<br>
         ข้อมูลครบ <b>77 จังหวัด</b>
@@ -399,14 +401,14 @@ def render_welcome_panel(df_all):
         with col_info:
             st.markdown(f"""
             <div style="padding:8px 4px;border-bottom:1px solid #E8EEF4">
-              <div style="font-size:1rem;font-weight:700;color:#0A1628">
+              <div style="font-size:1.12rem;font-weight:700;color:#0A1628">
                 #{int(row['rank_overall'])} {row['province_name_th']}
-                <span style="font-size:.84rem;color:#888;font-weight:400"> {row['province_name_en']}</span>
+                <span style="font-size:.97rem;color:#888;font-weight:400"> {row['province_name_en']}</span>
               </div>
               <div style="margin-top:3px">
-                <span style="font-size:1.15rem;font-weight:800;color:{tc}">{row['overall_score']:.2f}</span>
+                <span style="font-size:1.28rem;font-weight:800;color:{tc}">{row['overall_score']:.2f}</span>
                 <span style="background:{gc};color:white;padding:2px 9px;border-radius:10px;
-                             font-size:.8rem;font-weight:700;margin-left:6px">Grade {row['grade']}</span>
+                             font-size:.95rem;font-weight:700;margin-left:6px">Grade {row['grade']}</span>
               </div>
             </div>""", unsafe_allow_html=True)
         with col_btn:
@@ -535,7 +537,7 @@ def main():
         if strat_only: df_filtered = df_filtered[df_filtered["Strategic"]]
 
         st.markdown(
-            f'<div style="font-size:.75rem;color:#888;margin-bottom:4px">'
+            f'<div style="font-size:.91rem;color:#888;margin-bottom:4px">'
             f'🗺️ แสดง <b>{len(df_filtered)}</b> จาก 77 จังหวัด · '
             f'คลิก <b>Marker ★</b> หรือเลือกจาก Dropdown เพื่อดู Scorecard</div>',
             unsafe_allow_html=True)
@@ -564,20 +566,20 @@ def main():
                         border:2px solid {tc};margin-top:6px">
               <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
                 <div>
-                  <span style="font-size:1.05rem;font-weight:800;color:#0A1628">{sel}</span>
-                  <span style="font-size:.8rem;font-weight:400;color:#888"> {row_s['province_name_en']}</span><br>
-                  <span style="font-size:.78rem;color:#555">อันดับ <b>#{int(row_s['rank_overall'])}</b> · {row_s['region']}</span>
+                  <span style="font-size:1.18rem;font-weight:800;color:#0A1628">{sel}</span>
+                  <span style="font-size:.95rem;font-weight:400;color:#888"> {row_s['province_name_en']}</span><br>
+                  <span style="font-size:.94rem;color:#555">อันดับ <b>#{int(row_s['rank_overall'])}</b> · {row_s['region']}</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:10px">
                   <div style="text-align:center">
-                    <div style="font-size:1.6rem;font-weight:800;color:{tc};line-height:1">{row_s['overall_score']:.2f}</div>
-                    <div style="font-size:.68rem;color:#888">Overall</div>
+                    <div style="font-size:1.85rem;font-weight:800;color:{tc};line-height:1">{row_s['overall_score']:.2f}</div>
+                    <div style="font-size:.88rem;color:#888">Overall</div>
                   </div>
                   <div style="display:flex;flex-direction:column;gap:4px">
                     <span style="background:{gc};color:white;padding:2px 10px;border-radius:10px;
-                                 font-size:.78rem;font-weight:700;text-align:center">Grade {row_s['grade']}</span>
+                                 font-size:.94rem;font-weight:700;text-align:center">Grade {row_s['grade']}</span>
                     <span style="background:{tc};color:white;padding:2px 10px;border-radius:10px;
-                                 font-size:.72rem;font-weight:600;text-align:center">{row_s['tier']}</span>
+                                 font-size:.9rem;font-weight:600;text-align:center">{row_s['tier']}</span>
                   </div>
                 </div>
               </div>
@@ -585,7 +587,7 @@ def main():
         else:
             st.markdown("""
             <div style="background:#F5F8FC;border-radius:10px;padding:10px 16px;
-                        border:1px dashed #9DC3E6;margin-top:6px;font-size:.85rem;
+                        border:1px dashed #9DC3E6;margin-top:6px;font-size:.98rem;
                         color:#888;text-align:center">
               เลือกจังหวัดเพื่อดูข้อมูลสรุป
             </div>""", unsafe_allow_html=True)
@@ -624,7 +626,7 @@ def main():
 
     st.markdown("""
     <div style="background:#F0F7FF;border-radius:8px;padding:10px 18px;margin-top:10px;
-                border-left:4px solid #2E75B6;font-size:.85rem;color:#333">
+                border-left:4px solid #2E75B6;font-size:.98rem;color:#333">
       💡 <b>แนวทางการใช้งาน:</b>
       คลิก Marker บนแผนที่ หรือเลือกจาก Dropdown เพื่อดู Scorecard รายมิติ
       ใช้ Multiselect ด้านซ้ายล่างเพื่อเปรียบเทียบหลายจังหวัดพร้อมกัน
