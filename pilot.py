@@ -24,9 +24,8 @@ st.set_page_config(
 # CSS
 # ────────────────────────────────────────────────
 st.markdown("""
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-/* ── Global font ── */
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap');
 *, body, .stApp, [class*="st-"], [data-testid] {
     font-family: 'DB Heavent', 'Sarabun', 'Noto Sans Thai', sans-serif !important;
 }
