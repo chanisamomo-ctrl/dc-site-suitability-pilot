@@ -77,8 +77,8 @@ DIM_LABELS = {"energy_score":"⚡ Energy","water_score":"💧 Water","talent_sco
               "business_score":"🏢 Business","infrastructure_score":"🏭 Infrastructure","risk_score":"🛡️ Risk"}
 DIM_COLORS = {"energy_score":"#1A9B6C","water_score":"#2E75B6","talent_score":"#7B4FBF",
               "business_score":"#E07B00","infrastructure_score":"#1F7A8C","risk_score":"#C0392B"}
-TIER_FILL  = {"Tier 1 – Prime":"#1A9B6C","Tier 2 – Strong":"#5BB8A4",
-              "Tier 3 – Moderate":"#F0C040","Tier 4 – Emerging":"#BBBBBB"}
+TIER_FILL  = {"Tier 1 – Prime":"#1A9B6C","Tier 2 – Suitable":"#5BB8A4",
+              "Tier 3 – Conditional":"#F0C040","Tier 4 – Not Recommended":"#BBBBBB"}
 GRADE_COLOR= {"A":"#1A9B6C","B":"#2E75B6","C":"#FFC000","D":"#E04040"}
 GATE_HTML  = {"Recommended":"<span class='gate-pass'>✅ Gate Pass</span>",
               "Under Review":"<span class='gate-review'>⏳ Under Review</span>",
@@ -187,9 +187,9 @@ def build_map(df_all, geo, selected_th):
                     font-family:sans-serif;font-size:.82rem">
                   <b style="color:#0A1628">ระดับศักยภาพ</b><br>
                   <span style="color:#1A9B6C">■</span> Tier 1 – Prime<br>
-                  <span style="color:#5BB8A4">■</span> Tier 2 – Strong<br>
-                  <span style="color:#F0C040">■</span> Tier 3 – Moderate<br>
-                  <span style="color:#BBBBBB">■</span> Tier 4 – Emerging
+                  <span style="color:#5BB8A4">■</span> Tier 2 – Suitable<br>
+                  <span style="color:#F0C040">■</span> Tier 3 – Conditional<br>
+                  <span style="color:#BBBBBB">■</span> Tier 4 – Not Recommended
                 </div>"""
     m.get_root().html.add_child(folium.Element(leg))
     return m
@@ -398,7 +398,7 @@ def main():
 
         st.markdown("---")
         st.markdown('<div class="section-header">Tier</div>', unsafe_allow_html=True)
-        tier_opts = ["ทั้งหมด","Tier 1 – Prime","Tier 2 – Strong","Tier 3 – Moderate","Tier 4 – Emerging"]
+        tier_opts = ["ทั้งหมด","Tier 1 – Prime","Tier 2 – Suitable","Tier 3 – Conditional","Tier 4 – Not Recommended"]
         tier_sel  = st.radio("", tier_opts, horizontal=False,
                              label_visibility="collapsed", key="tier_radio")
         st.session_state.tier_filter = tier_sel
