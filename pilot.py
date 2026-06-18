@@ -123,6 +123,37 @@ def build_map(df_all, geo, selected_th):
             sel_en = str(r.iloc[0]["province_name_en"])
             if sel_en == "Bangkok": sel_en = "Bangkok Metropolis"
 
+    # Embed province data into GeoJSON properties for tooltip
+    import copy
+    geo_enriched = copy.deepcopy(geo)
+    for feat in geo_enriched["features"]:
+        en_name = feat["properties"].get("name","")
+        row = en_lookup.get(en_name)
+        if row is not None:
+            feat["properties"]["province_th"]   = str(row["province_name_th"])
+            feat["properties"]["overall_score"] = f"{row['overall_score']:.2f}"
+            feat["properties"]["grade"]         = str(row["grade"])
+            feat["properties"]["tier"]          = str(row["tier"])
+            feat["properties"]["rank"]          = f"#{int(row['rank_overall'])}"
+            feat["properties"]["energy"]        = f"{row['energy_score_pct']:.0f}"
+            feat["properties"]["water"]         = f"{row['water_score_pct']:.0f}"
+            feat["properties"]["talent"]        = f"{row['talent_score_pct']:.0f}"
+            feat["properties"]["boi"]           = f"{row['business_score_pct']:.0f}"
+            feat["properties"]["ieat"]          = f"{row['infrastructure_score_pct']:.0f}"
+            feat["properties"]["risk"]          = f"{row['risk_score_pct']:.0f}"
+        else:
+            feat["properties"]["province_th"]   = en_name
+            feat["properties"]["overall_score"] = "N/A"
+            feat["properties"]["grade"]         = "-"
+            feat["properties"]["tier"]          = "-"
+            feat["properties"]["rank"]          = "-"
+            feat["properties"]["energy"]        = "-"
+            feat["properties"]["water"]         = "-"
+            feat["properties"]["talent"]        = "-"
+            feat["properties"]["boi"]           = "-"
+            feat["properties"]["ieat"]          = "-"
+            feat["properties"]["risk"]          = "-"
+
     def style_fn(feat):
         name = feat["properties"]["name"]
         row  = en_lookup.get(name)
@@ -135,11 +166,31 @@ def build_map(df_all, geo, selected_th):
         return {"fillColor":"#E4ECF5","color":"#BBBBBB","weight":0.4,"fillOpacity":0.3}
 
     def hl_fn(feat):
-        return {"weight":2.5,"color":"#0A1628","fillOpacity":0.7}
+        return {"weight":2.5,"color":"#0A1628","fillOpacity":0.75}
+
+    tooltip = folium.GeoJsonTooltip(
+        fields=["province_th","rank","overall_score","grade","tier",
+                "energy","water","talent","boi","ieat","risk"],
+        aliases=["🏙️ จังหวัด","📊 อันดับ","⭐ คะแนนรวม","Grade","Tier",
+                 "⚡ Energy","💧 Water","🎓 Talent","🏢 BOI","🏭 IEAT","🛡️ Risk"],
+        localize=True,
+        sticky=True,
+        style="""
+            background-color: #0A1628;
+            color: white;
+            font-family: sans-serif;
+            font-size: 13px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid #2E75B6;
+            line-height: 1.7;
+        """,
+        max_width=260,
+    )
 
     folium.GeoJson(
-        geo, style_function=style_fn, highlight_function=hl_fn,
-        tooltip=folium.GeoJsonTooltip(fields=["name"], aliases=["จังหวัด:"]),
+        geo_enriched, style_function=style_fn, highlight_function=hl_fn,
+        tooltip=tooltip,
     ).add_to(m)
 
     # Marker เฉพาะจังหวัดที่เลือก
