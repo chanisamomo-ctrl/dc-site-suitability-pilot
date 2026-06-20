@@ -26,6 +26,7 @@ st.set_page_config(
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap');
+html { font-size: 18px; }
 *, body, .stApp, [class*="st-"], [data-testid] {
     font-family: 'DB Heavent', 'Sarabun', 'Noto Sans Thai', sans-serif !important;
 }
@@ -200,29 +201,40 @@ def build_map(df_all, geo, selected_th):
     def hl_fn(feat):
         return {"weight":2.5,"color":"#0A1628","fillOpacity":0.75}
 
+    # Hover tooltip — แสดงแค่ชื่อ + คะแนนรวม
     tooltip = folium.GeoJsonTooltip(
+        fields=["province_th", "rank", "overall_score", "grade"],
+        aliases=["จังหวัด", "อันดับ", "คะแนนรวม", "Grade"],
+        localize=True,
+        sticky=False,
+        style="""
+            background-color: #0A1628;
+            color: white;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            padding: 8px 14px;
+            border-radius: 10px;
+            border: 2px solid #1A9B6C;
+            line-height: 1.8;
+        """,
+        max_width=200,
+    )
+
+    # Click popup — แสดงรายละเอียดทุก dimension
+    popup = folium.GeoJsonPopup(
         fields=["province_th","rank","overall_score","grade","tier",
                 "energy","water","talent","boi","ieat","risk"],
         aliases=["🏙️ จังหวัด","📊 อันดับ","⭐ คะแนนรวม","Grade","Tier",
                  "⚡ Energy","💧 Water","🎓 Talent","🏢 BOI","🏭 IEAT","🛡️ Risk"],
         localize=True,
-        sticky=True,
-        style="""
-            background-color: #0A1628;
-            color: white;
-            font-family: sans-serif;
-            font-size: 13px;
-            padding: 10px 14px;
-            border-radius: 8px;
-            border: 1px solid #2E75B6;
-            line-height: 1.7;
-        """,
-        max_width=260,
+        style="font-family:'Sarabun',sans-serif;font-size:14px;line-height:1.8;min-width:200px;",
+        max_width=280,
     )
 
     folium.GeoJson(
         geo_enriched, style_function=style_fn, highlight_function=hl_fn,
-        tooltip=tooltip,
+        tooltip=tooltip, popup=popup,
     ).add_to(m)
 
     # Marker เฉพาะจังหวัดที่เลือก
