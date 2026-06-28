@@ -1,6 +1,7 @@
 """
 Thailand Data Center Site Suitability Dashboard
-ข้อมูล 77 จังหวัด | เกณฑ์ v2.0 | ข้อมูล: มิ.ย. 2569
+2 ขั้นตอน: 🔒 Gate Criteria (คัดกรองเบื้องต้น) → 📊 6D Assessment (ให้คะแนน 6 มิติ)
+ข้อมูล: มิ.ย. 2569 (v3 — After Defense)
 """
 
 import streamlit as st
@@ -8,7 +9,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import folium
 from streamlit_folium import st_folium
-import json, os
+import json, os, copy
 
 # ────────────────────────────────────────────────
 # PAGE CONFIG
@@ -41,6 +42,16 @@ html { font-size: 18px; }
 }
 .topnav-title {font-size:1.3rem; font-weight:700; color:#fff; letter-spacing:.3px}
 .topnav-sub   {font-size:.98rem; color:#9DC3E6; margin-top:2px}
+
+/* ── Stepper ── */
+.stepper {display:flex; align-items:center; gap:10px; margin:10px 0 16px 0;}
+.step-pill {
+    display:flex; align-items:center; gap:8px; padding:8px 18px;
+    border-radius:24px; font-size:1rem; font-weight:700;
+}
+.step-active {background:#1A9B6C; color:white;}
+.step-inactive {background:#E4ECF5; color:#888;}
+.step-arrow {color:#9DC3E6; font-size:1.2rem;}
 
 /* ── Section header ── */
 .section-header {
@@ -81,6 +92,8 @@ html { font-size: 18px; }
              padding:5px 14px;border-radius:20px;font-size:.98rem;margin:3px;display:inline-block}
 .chip-orange{background:#FFF8E6;color:#D0700A;border:1px solid #FACEAA;
              padding:5px 14px;border-radius:20px;font-size:.98rem;margin:3px;display:inline-block}
+.chip-gray  {background:#F0F0F0;color:#666;border:1px solid #DDD;
+             padding:5px 14px;border-radius:20px;font-size:.98rem;margin:3px;display:inline-block}
 
 /* ── Welcome box ── */
 .welcome-box {
@@ -94,15 +107,28 @@ html { font-size: 18px; }
 .dim-label {font-size:1.02rem; font-weight:600; color:#222}
 .dim-value {font-size:1.02rem; font-weight:700}
 .dim-sub   {font-size:.86rem; color:#999; text-align:right}
+
+/* ── Gate checklist row ── */
+.gate-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 14px; margin-bottom:6px; border-radius:10px;
+    background:#F5F8FC; border:1px solid #E4ECF5;
+}
+.gate-row-pass {border-left:4px solid #1A9B6C;}
+.gate-row-fail {border-left:4px solid #E04040;}
+.gate-row-na   {border-left:4px solid #BBBBBB;}
+.gate-crit-label {font-size:1rem; font-weight:600; color:#222}
+.gate-crit-value {font-size:.9rem; color:#888}
 </style>
 """, unsafe_allow_html=True)
 
 # ────────────────────────────────────────────────
 # CONSTANTS
 # ────────────────────────────────────────────────
-BASE     = os.path.dirname(__file__)
-DATA_CSV = os.path.join(BASE, "data", "province_scores.csv")
-GEO_FILE = os.path.join(BASE, "thailand.json")
+BASE          = os.path.dirname(__file__)
+GATE_CSV      = os.path.join(BASE, "data", "gate_criteria.csv")
+SIXD_CSV      = os.path.join(BASE, "data", "six_d_assessment.csv")
+GEO_FILE      = os.path.join(BASE, "thailand.json")
 
 DIM_KEYS   = ["energy_score","water_score","talent_score","business_score","infrastructure_score","risk_score"]
 DIM_MAX    = {"energy_score":35,"water_score":20,"talent_score":20,"business_score":7.5,"infrastructure_score":7.5,"risk_score":10}
@@ -110,21 +136,52 @@ DIM_LABELS = {"energy_score":"⚡ Energy","water_score":"💧 Water","talent_sco
               "business_score":"🏢 Business","infrastructure_score":"🏭 Infrastructure","risk_score":"🛡️ Risk"}
 DIM_COLORS = {"energy_score":"#1A9B6C","water_score":"#2E75B6","talent_score":"#7B4FBF",
               "business_score":"#E07B00","infrastructure_score":"#1F7A8C","risk_score":"#C0392B"}
-TIER_FILL  = {"Tier 1 – Prime":"#1A9B6C","Tier 2 – Suitable":"#5BB8A4",
-              "Tier 3 – Conditional":"#F0C040","Tier 4 – Not Recommended":"#BBBBBB"}
-GRADE_COLOR= {"A":"#1A9B6C","B":"#2E75B6","C":"#FFC000","D":"#E04040"}
-GATE_HTML  = {"Recommended":"<span class='gate-pass'>✅ Gate Pass</span>",
-              "Under Review":"<span class='gate-review'>⏳ Under Review</span>",
-              "Not Recommended":"<span class='gate-no'>❌ Not Recommended</span>"}
+GRADE_COLOR= {"A":"#1A9B6C","B":"#2E75B6","C":"#FFC000","D":"#E04040","F":"#9B2226"}
+
+GATE_LABELS = {
+    "g1_energy":     "⚡ G1 — กำลังผลิตไฟฟ้า ≥ 100 MW",
+    "g2_water":      "💧 G2 — แหล่งน้ำผิวดิน ≥ 1 แหล่ง",
+    "g3_population": "👥 G3 — ประชากร ≥ 500,000 คน",
+    "g4_education":  "🎓 G4 — สถาบันการศึกษา ≥ 3 แห่ง",
+    "g5_flood":      "🌊 G5 — โซนน้ำท่วม ต่ำ–ปานกลาง",
+    "g6_industrial": "🏭 G6 — มีนิคมอุตสาหกรรม/โครงการ BOI",
+}
+GATE_RAW_LABELS = {
+    "g1_energy":     ("raw_mw", "MW", 1),
+    "g2_water":      ("raw_water_sources", "แหล่ง", 0),
+    "g3_population": ("raw_population", "คน", 0),
+    "g4_education":  ("raw_education", "แห่ง", 0),
+    "g5_flood":      ("raw_flood_zone", "", None),
+    "g6_industrial": ("raw_industrial", "นิคม", 0),
+}
+
+def tier_color(tier_str):
+    t = str(tier_str)
+    if t.startswith("Tier 1"): return "#1A9B6C"
+    if t.startswith("Tier 2"): return "#5BB8A4"
+    if t.startswith("Tier 3"): return "#F0C040"
+    if t.startswith("Tier 4"): return "#BBBBBB"
+    if t.startswith("Tier 5"): return "#8B2E2E"
+    return "#888888"
+
+def tier_short(tier_str):
+    t = str(tier_str)
+    return t.split("(")[0].strip()
 
 # ────────────────────────────────────────────────
 # DATA
 # ────────────────────────────────────────────────
 @st.cache_data(ttl=300)
-def load_data():
-    df = pd.read_csv(DATA_CSV, encoding="utf-8-sig")
+def load_gate():
+    df = pd.read_csv(GATE_CSV, encoding="utf-8-sig")
+    return df
+
+@st.cache_data(ttl=300)
+def load_6d():
+    df = pd.read_csv(SIXD_CSV, encoding="utf-8-sig")
     df["EEC"]       = df["EEC"].astype(bool)
     df["Strategic"] = df["Strategic"].astype(bool)
+    df["passed_gate"] = df["passed_gate"].astype(bool)
     for k, mx in DIM_MAX.items():
         if f"{k}_pct" not in df.columns:
             df[f"{k}_pct"] = (df[k] / mx * 100).round(1)
@@ -136,13 +193,25 @@ def load_geo():
         return json.load(f)
 
 # ────────────────────────────────────────────────
-# MAP
+# STEPPER UI
 # ────────────────────────────────────────────────
-def build_map(df_all, geo, selected_th):
+def render_stepper(active):
+    s1 = "step-active" if active == "gate" else "step-inactive"
+    s2 = "step-active" if active == "6d" else "step-inactive"
+    st.markdown(f"""
+    <div class="stepper">
+      <div class="step-pill {s1}">① 🔒 Gate Criteria</div>
+      <div class="step-arrow">➜</div>
+      <div class="step-pill {s2}">② 📊 6D Assessment</div>
+    </div>""", unsafe_allow_html=True)
+
+# ════════════════════════════════════════════════
+# TAB 1 — GATE CRITERIA
+# ════════════════════════════════════════════════
+def build_gate_map(df_all, geo, selected_th):
     m = folium.Map(location=[13.0, 101.5], zoom_start=6,
                    tiles="CartoDB positron", prefer_canvas=True)
 
-    # lookup: EN name → row
     en_lookup = {}
     for _, row in df_all.iterrows():
         en = str(row["province_name_en"])
@@ -156,17 +225,174 @@ def build_map(df_all, geo, selected_th):
             sel_en = str(r.iloc[0]["province_name_en"])
             if sel_en == "Bangkok": sel_en = "Bangkok Metropolis"
 
-    # Embed province data into GeoJSON properties for tooltip
-    import copy
     geo_enriched = copy.deepcopy(geo)
     for feat in geo_enriched["features"]:
         en_name = feat["properties"].get("name","")
         row = en_lookup.get(en_name)
         if row is not None:
+            feat["properties"]["province_th"]  = str(row["province_name_th"])
+            feat["properties"]["gate_count"]    = f"{int(row['gate_passed_count'])}/6"
+            feat["properties"]["gate_status_th"]= "✅ ผ่าน Gate" if row["gate_status"]=="PASS" else "❌ ไม่ผ่าน Gate"
+        else:
+            feat["properties"]["province_th"]   = en_name
+            feat["properties"]["gate_count"]     = "-"
+            feat["properties"]["gate_status_th"] = "-"
+
+    def style_fn(feat):
+        name = feat["properties"]["name"]
+        row  = en_lookup.get(name)
+        if row is None:
+            return {"fillColor":"#E4ECF5","color":"#BBBBBB","weight":0.4,"fillOpacity":0.3}
+        passed = row["gate_status"] == "PASS"
+        base_color = "#1A9B6C" if passed else "#E04040"
+        if name == sel_en:
+            return {"fillColor": base_color, "color":"#0A1628","weight":3.0,"fillOpacity":0.88}
+        return {"fillColor": base_color, "color":"#777","weight":0.5,"fillOpacity":0.45}
+
+    def hl_fn(feat):
+        return {"weight":2.5,"color":"#0A1628","fillOpacity":0.75}
+
+    tooltip = folium.GeoJsonTooltip(
+        fields=["province_th","gate_count","gate_status_th"],
+        aliases=["จังหวัด","ผ่านเกณฑ์","สถานะ"],
+        localize=True, sticky=False,
+        style="""
+            background-color:#0A1628;color:white;font-family:'Sarabun',sans-serif;
+            font-size:15px;font-weight:600;padding:8px 14px;border-radius:10px;
+            border:2px solid #1A9B6C;line-height:1.8;
+        """,
+        max_width=200,
+    )
+    popup = folium.GeoJsonPopup(
+        fields=["province_th","gate_count","gate_status_th"],
+        aliases=["🏙️ จังหวัด","✅ ผ่านเกณฑ์","📋 สถานะ"],
+        localize=True,
+        style="font-family:'Sarabun',sans-serif;font-size:14px;line-height:1.8;min-width:180px;",
+        max_width=250,
+    )
+
+    folium.GeoJson(geo_enriched, style_function=style_fn, highlight_function=hl_fn,
+                   tooltip=tooltip, popup=popup).add_to(m)
+
+    leg = """<div style="position:fixed;bottom:24px;left:24px;z-index:1000;background:white;
+                padding:10px 14px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.2);
+                font-family:sans-serif;font-size:.96rem">
+              <b style="color:#0A1628">สถานะ Gate</b><br>
+              <span style="color:#1A9B6C">■</span> ผ่าน Gate (≥3/6)<br>
+              <span style="color:#E04040">■</span> ไม่ผ่าน Gate (&lt;3/6)
+            </div>"""
+    m.get_root().html.add_child(folium.Element(leg))
+    return m
+
+
+def render_gate_scorecard(row):
+    th, en = row["province_name_th"], row["province_name_en"]
+    passed = row["gate_status"] == "PASS"
+    cnt    = int(row["gate_passed_count"])
+    badge  = "<span class='gate-pass'>✅ ผ่าน Gate Criteria</span>" if passed \
+             else "<span class='gate-no'>❌ ไม่ผ่าน Gate Criteria</span>"
+
+    st.markdown(f"""
+    <div style="margin-bottom:10px">
+      <div style="font-size:.96rem;color:#888;margin-bottom:2px">Gate Criteria Checklist</div>
+      <div style="font-size:2.1rem;font-weight:800;color:#0A1628;line-height:1.15">{th}</div>
+      <div style="font-size:1.04rem;color:#555;margin-top:2px">{en} &nbsp;·&nbsp; {row['region']}</div>
+      <div style="margin-top:6px">{badge}</div>
+    </div>""", unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div class="score-box">
+      <div class="score-label">ผ่านเกณฑ์</div>
+      <div style="display:flex;align-items:flex-end;gap:10px">
+        <div class="score-big">{cnt}</div>
+        <div style="font-size:1.4rem;color:#9DC3E6;padding-bottom:8px">/ 6 ข้อ</div>
+      </div>
+      <div style="font-size:.92rem;color:#9DC3E6;margin-top:4px">เกณฑ์ผ่าน: ต้องผ่านอย่างน้อย 3 ใน 6 ข้อ</div>
+    </div>""", unsafe_allow_html=True)
+
+    st.markdown('<div class="section-header">รายละเอียดแต่ละข้อ (G1–G6)</div>', unsafe_allow_html=True)
+    for gkey, label in GATE_LABELS.items():
+        val = row.get(gkey)
+        raw_key, unit, dec = GATE_RAW_LABELS[gkey]
+        raw_val = row.get(raw_key, "-")
+        if pd.notna(val) and int(val) == 1:
+            cls, icon, txt = "gate-row-pass", "✅", "ผ่าน"
+        elif pd.notna(val) and int(val) == 0:
+            cls, icon, txt = "gate-row-fail", "❌", "ไม่ผ่าน"
+        else:
+            cls, icon, txt = "gate-row-na", "⚠️", "ไม่มีข้อมูล"
+        if unit and dec is not None and isinstance(raw_val, (int,float)):
+            raw_str = f"{raw_val:,.{dec}f} {unit}"
+        else:
+            raw_str = f"{raw_val}"
+        st.markdown(f"""
+        <div class="gate-row {cls}">
+          <div class="gate-crit-label">{icon} {label}</div>
+          <div style="text-align:right">
+            <div class="gate-crit-value">ค่าจริง: {raw_str}</div>
+            <div style="font-weight:700;color:{'#1A9B6C' if icon=='✅' else ('#E04040' if icon=='❌' else '#999')}">{txt}</div>
+          </div>
+        </div>""", unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div class="gate-row gate-row-na">
+      <div class="gate-crit-label">🛣️ G7 — ทางหลวงแผ่นดิน</div>
+      <div style="text-align:right">
+        <div class="gate-crit-value">ไม่มีข้อมูลใน Database</div>
+        <div style="font-weight:700;color:#999">⚠️ ต้องตรวจสอบ</div>
+      </div>
+    </div>""", unsafe_allow_html=True)
+
+    if passed:
+        st.success("✅ จังหวัดนี้ผ่าน Gate Criteria — สามารถดูคะแนนรายมิติต่อได้ในขั้นตอน 6D Assessment")
+    else:
+        st.error("❌ จังหวัดนี้ไม่ผ่าน Gate Criteria (ผ่านน้อยกว่า 3/6 ข้อ) — จะถูกจัดเป็น Tier 5 และไม่มีคะแนน 6D")
+
+
+def render_gate_welcome(df_all):
+    passed_n = (df_all["gate_status"]=="PASS").sum()
+    st.markdown(f"""
+    <div class="welcome-box">
+      <div style="font-size:3rem;margin-bottom:10px">🔒</div>
+      <div style="font-size:1.35rem;font-weight:800;color:#0A1628;margin-bottom:8px">
+        เลือกจังหวัดเพื่อดูผล Gate Criteria
+      </div>
+      <div style="font-size:1.06rem;color:#555;line-height:1.8">
+        เลือกจากช่อง Dropdown ด้านซ้าย หรือคลิกบนแผนที่<br>
+        ผ่านเกณฑ์ทั้งหมด <b>{passed_n} / 77</b> จังหวัด (≥ 3 ใน 6 ข้อ)
+      </div>
+    </div>""", unsafe_allow_html=True)
+
+
+# ════════════════════════════════════════════════
+# TAB 2 — 6D ASSESSMENT
+# ════════════════════════════════════════════════
+def build_6d_map(df_all, geo, selected_th):
+    m = folium.Map(location=[13.0, 101.5], zoom_start=6,
+                   tiles="CartoDB positron", prefer_canvas=True)
+
+    en_lookup = {}
+    for _, row in df_all.iterrows():
+        en = str(row["province_name_en"])
+        if en == "Bangkok": en = "Bangkok Metropolis"
+        en_lookup[en] = row
+
+    sel_en = None
+    if selected_th:
+        r = df_all[df_all["province_name_th"] == selected_th]
+        if len(r):
+            sel_en = str(r.iloc[0]["province_name_en"])
+            if sel_en == "Bangkok": sel_en = "Bangkok Metropolis"
+
+    geo_enriched = copy.deepcopy(geo)
+    for feat in geo_enriched["features"]:
+        en_name = feat["properties"].get("name","")
+        row = en_lookup.get(en_name)
+        if row is not None and row["passed_gate"]:
             feat["properties"]["province_th"]   = str(row["province_name_th"])
             feat["properties"]["overall_score"] = f"{row['overall_score']:.2f}"
             feat["properties"]["grade"]         = str(row["grade"])
-            feat["properties"]["tier"]          = str(row["tier"])
+            feat["properties"]["tier"]          = tier_short(row["tier"])
             feat["properties"]["rank"]          = f"#{int(row['rank_overall'])}"
             feat["properties"]["energy"]        = f"{row['energy_score_pct']:.0f}"
             feat["properties"]["water"]         = f"{row['water_score_pct']:.0f}"
@@ -174,6 +400,18 @@ def build_map(df_all, geo, selected_th):
             feat["properties"]["boi"]           = f"{row['business_score_pct']:.0f}"
             feat["properties"]["ieat"]          = f"{row['infrastructure_score_pct']:.0f}"
             feat["properties"]["risk"]          = f"{row['risk_score_pct']:.0f}"
+        elif row is not None:
+            feat["properties"]["province_th"]   = str(row["province_name_th"])
+            feat["properties"]["overall_score"] = "ไม่ผ่าน Gate"
+            feat["properties"]["grade"]         = "-"
+            feat["properties"]["tier"]          = "Tier 5"
+            feat["properties"]["rank"]          = "-"
+            feat["properties"]["energy"]        = "-"
+            feat["properties"]["water"]         = "-"
+            feat["properties"]["talent"]        = "-"
+            feat["properties"]["boi"]           = "-"
+            feat["properties"]["ieat"]          = "-"
+            feat["properties"]["risk"]          = "-"
         else:
             feat["properties"]["province_th"]   = en_name
             feat["properties"]["overall_score"] = "N/A"
@@ -190,38 +428,28 @@ def build_map(df_all, geo, selected_th):
     def style_fn(feat):
         name = feat["properties"]["name"]
         row  = en_lookup.get(name)
-        if name == sel_en and row is not None:
-            return {"fillColor": TIER_FILL.get(row["tier"],"#1A9B6C"),
-                    "color":"#0A1628","weight":3.0,"fillOpacity":0.90}
-        if row is not None:
-            return {"fillColor": TIER_FILL.get(row["tier"],"#BBBBBB"),
-                    "color":"#777","weight":0.5,"fillOpacity":0.45}
-        return {"fillColor":"#E4ECF5","color":"#BBBBBB","weight":0.4,"fillOpacity":0.3}
+        if row is None:
+            return {"fillColor":"#E4ECF5","color":"#BBBBBB","weight":0.4,"fillOpacity":0.3}
+        color = tier_color(row["tier"]) if row["passed_gate"] else "#D8D8D8"
+        if name == sel_en:
+            return {"fillColor": color, "color":"#0A1628","weight":3.0,"fillOpacity":0.90}
+        return {"fillColor": color, "color":"#777","weight":0.5,
+                "fillOpacity":0.45 if row["passed_gate"] else 0.25}
 
     def hl_fn(feat):
         return {"weight":2.5,"color":"#0A1628","fillOpacity":0.75}
 
-    # Hover tooltip — แสดงแค่ชื่อ + คะแนนรวม
     tooltip = folium.GeoJsonTooltip(
-        fields=["province_th", "rank", "overall_score", "grade"],
-        aliases=["จังหวัด", "อันดับ", "คะแนนรวม", "Grade"],
-        localize=True,
-        sticky=False,
+        fields=["province_th","rank","overall_score","grade"],
+        aliases=["จังหวัด","อันดับ","คะแนนรวม","Grade"],
+        localize=True, sticky=False,
         style="""
-            background-color: #0A1628;
-            color: white;
-            font-family: 'Sarabun', sans-serif;
-            font-size: 15px;
-            font-weight: 600;
-            padding: 8px 14px;
-            border-radius: 10px;
-            border: 2px solid #1A9B6C;
-            line-height: 1.8;
+            background-color:#0A1628;color:white;font-family:'Sarabun',sans-serif;
+            font-size:15px;font-weight:600;padding:8px 14px;border-radius:10px;
+            border:2px solid #1A9B6C;line-height:1.8;
         """,
-        max_width=200,
+        max_width=220,
     )
-
-    # Click popup — แสดงรายละเอียดทุก dimension
     popup = folium.GeoJsonPopup(
         fields=["province_th","rank","overall_score","grade","tier",
                 "energy","water","talent","boi","ieat","risk"],
@@ -232,85 +460,40 @@ def build_map(df_all, geo, selected_th):
         max_width=280,
     )
 
-    folium.GeoJson(
-        geo_enriched, style_function=style_fn, highlight_function=hl_fn,
-        tooltip=tooltip, popup=popup,
-    ).add_to(m)
+    folium.GeoJson(geo_enriched, style_function=style_fn, highlight_function=hl_fn,
+                   tooltip=tooltip, popup=popup).add_to(m)
 
-    # Marker เฉพาะจังหวัดที่เลือก
-    if selected_th:
-        r = df_all[df_all["province_name_th"] == selected_th]
-        if len(r) and pd.notna(r.iloc[0].get("lat")) and pd.notna(r.iloc[0].get("lng")):
-            row  = r.iloc[0]
-            lat, lon = float(row["lat"]), float(row["lng"])
-            popup_html = f"""
-            <div style="font-family:sans-serif;min-width:210px">
-              <b style="font-size:1.12rem;color:#0A1628">{selected_th}</b>&nbsp;
-              <span style="color:#888;font-size:.95rem">{row['province_name_en']}</span>
-              <hr style="margin:5px 0">
-              <div style="font-size:1.75rem;font-weight:800;color:#1A9B6C">{row['overall_score']:.2f}</div>
-              <div style="font-size:.94rem;color:#555;margin-bottom:4px">Overall Score</div>
-              <span style="background:{TIER_FILL.get(row['tier'],'#888')};color:white;
-                           padding:2px 10px;border-radius:12px;font-size:.94rem;font-weight:700">
-                {row['tier']}
-              </span>&nbsp;
-              <span style="font-size:.94rem;color:#333">Grade <b>{row['grade']}</b></span>
+    leg = """<div style="position:fixed;bottom:24px;left:24px;z-index:1000;background:white;
+                padding:10px 14px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.2);
+                font-family:sans-serif;font-size:.96rem">
+              <b style="color:#0A1628">ระดับศักยภาพ</b><br>
+              <span style="color:#1A9B6C">■</span> Tier 1 – Prime<br>
+              <span style="color:#5BB8A4">■</span> Tier 2 – Suitable<br>
+              <span style="color:#F0C040">■</span> Tier 3 – Conditional<br>
+              <span style="color:#BBBBBB">■</span> Tier 4 – Not Recommended<br>
+              <span style="color:#D8D8D8">■</span> Tier 5 – ไม่ผ่าน Gate
             </div>"""
-            folium.Marker(
-                [lat, lon],
-                popup=folium.Popup(popup_html, max_width=250),
-                tooltip=f"★ {selected_th}  {row['overall_score']:.2f}",
-                icon=folium.Icon(color="darkgreen", icon="star"),
-            ).add_to(m)
-
-    # Legend
-    if selected_th:
-        r = df_all[df_all["province_name_th"] == selected_th]
-        if len(r):
-            row = r.iloc[0]
-            tc  = TIER_FILL.get(row["tier"],"#888")
-            leg = f"""<div style="position:fixed;bottom:24px;left:24px;z-index:1000;background:white;
-                        padding:10px 14px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.2);
-                        font-family:sans-serif;font-size:.96rem">
-                      <b style="color:#0A1628">จังหวัดที่เลือก</b><br>
-                      <span style="color:{tc}">■</span> <b>{selected_th}</b> · {row['tier']}<br>
-                      <span style="font-size:.91rem;color:#888">Overall: {row['overall_score']:.2f}</span>
-                    </div>"""
-    else:
-        leg = """<div style="position:fixed;bottom:24px;left:24px;z-index:1000;background:white;
-                    padding:10px 14px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.2);
-                    font-family:sans-serif;font-size:.96rem">
-                  <b style="color:#0A1628">ระดับศักยภาพ</b><br>
-                  <span style="color:#1A9B6C">■</span> Tier 1 – Prime<br>
-                  <span style="color:#5BB8A4">■</span> Tier 2 – Suitable<br>
-                  <span style="color:#F0C040">■</span> Tier 3 – Conditional<br>
-                  <span style="color:#BBBBBB">■</span> Tier 4 – Not Recommended
-                </div>"""
     m.get_root().html.add_child(folium.Element(leg))
     return m
 
-# ────────────────────────────────────────────────
-# SCORECARD
-# ────────────────────────────────────────────────
-def render_scorecard(row):
-    th    = row["province_name_th"]
-    en    = row["province_name_en"]
-    score = row["overall_score"]
-    grade = str(row["grade"]).strip()
-    tier  = row["tier"]
-    gate  = row["gate_status"]
-    rank  = int(row["rank_overall"])
-    tc    = TIER_FILL.get(tier,"#888")
-    gc    = GRADE_COLOR.get(grade,"#888")
+
+def render_6d_scorecard(row):
+    th, en   = row["province_name_th"], row["province_name_en"]
+    score    = row["overall_score"]
+    grade    = str(row["grade"]).strip()
+    tier     = row["tier"]
+    rank     = int(row["rank_overall"]) if pd.notna(row["rank_overall"]) else None
+    tc       = tier_color(tier)
+    gc       = GRADE_COLOR.get(grade,"#888")
 
     st.markdown(f"""
     <div style="margin-bottom:10px">
-      <div style="font-size:.96rem;color:#888;margin-bottom:2px">Province Scorecard</div>
+      <div style="font-size:.96rem;color:#888;margin-bottom:2px">6D Assessment Scorecard</div>
       <div style="font-size:2.1rem;font-weight:800;color:#0A1628;line-height:1.15">{th}</div>
       <div style="font-size:1.04rem;color:#555;margin-top:2px">
-        {en} &nbsp;·&nbsp; อันดับ <b>#{rank}</b> จาก 77 จังหวัด
+        {en} &nbsp;·&nbsp; อันดับ <b>#{rank}</b> จาก {st.session_state.get('passed_total','50')} จังหวัดที่ผ่าน Gate
       </div>
-      <div style="margin-top:6px">{GATE_HTML.get(gate,'')}</div>
+      <div style="margin-top:6px"><span class="gate-pass">✅ ผ่าน Gate Criteria</span></div>
     </div>""", unsafe_allow_html=True)
 
     st.markdown(f"""
@@ -320,7 +503,7 @@ def render_scorecard(row):
         <div class="score-big">{score:.2f}</div>
         <div style="padding-bottom:6px;display:flex;flex-direction:column;gap:6px">
           <span style="background:{tc};color:white;padding:5px 16px;border-radius:20px;
-                       font-size:1.02rem;font-weight:700">{tier}</span>
+                       font-size:1.02rem;font-weight:700">{tier_short(tier)}</span>
           <span style="background:{gc};color:white;padding:4px 14px;border-radius:20px;
                        font-size:1rem;font-weight:700">Grade {grade}</span>
         </div>
@@ -334,7 +517,7 @@ def render_scorecard(row):
         st.markdown(" ".join([f'<span class="chip-green">{b}</span>' for b in badges]),
                     unsafe_allow_html=True)
 
-    st.markdown('<div class="section-header">คะแนนรายมิติ</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">คะแนนรายมิติ (6D)</div>', unsafe_allow_html=True)
     for k in DIM_KEYS:
         pct   = float(row[f"{k}_pct"])
         raw_w = float(row[k])
@@ -354,24 +537,6 @@ def render_scorecard(row):
           <div class="dim-sub">น้ำหนักคะแนน: {raw_w:.2f} / {mx}</div>
         </div>""", unsafe_allow_html=True)
 
-    st.markdown('<div class="section-header">จุดแข็ง / จุดอ่อน</div>', unsafe_allow_html=True)
-    strengths  = [s.strip() for s in str(row.get("strengths","")).split(",") if s.strip() not in ("","nan","—","-")]
-    weaknesses = [w.strip() for w in str(row.get("weaknesses","")).split(",") if w.strip() not in ("","nan","—","-")]
-    if strengths:
-        chips = " ".join([f'<span class="chip-green">💪 {s}</span>' for s in strengths])
-        st.markdown(f'<div style="margin-bottom:4px"><b style="font-size:.97rem;color:#1A9B6C">จุดแข็ง</b><br>{chips}</div>',
-                    unsafe_allow_html=True)
-    if weaknesses:
-        chips = " ".join([f'<span class="chip-red">⚠️ {w}</span>' for w in weaknesses])
-        st.markdown(f'<div style="margin-top:4px"><b style="font-size:.97rem;color:#C0392B">จุดอ่อน</b><br>{chips}</div>',
-                    unsafe_allow_html=True)
-    if not strengths and not weaknesses:
-        st.markdown('<div style="font-size:1rem;color:#aaa">— คะแนนอยู่ในช่วงปานกลางทุกมิติ —</div>', unsafe_allow_html=True)
-    note = str(row.get("analyst_note","")).strip()
-    if note and note != "nan":
-        st.markdown(f'<div style="margin-top:6px"><span class="chip-orange">📝 {note}</span></div>',
-                    unsafe_allow_html=True)
-
     with st.expander("📋 ข้อมูลดิบ"):
         raw_items = {
             "พลังงานติดตั้งรวม (MW)":         f"{float(row.get('installed_mw',0)):,.1f}",
@@ -380,34 +545,35 @@ def render_scorecard(row):
             "วิทยาลัยอาชีวศึกษา":             f"{int(row.get('voc_count',0))} แห่ง",
             "โครงการ BOI DC":                 f"{int(row.get('boi_projects',0))} โครงการ",
             "นิคมอุตสาหกรรม (IEAT)":          f"{int(row.get('ieat_count',0))} แห่ง",
-            "DC IT Load (MW)":                 f"{float(row.get('dc_it_load_mw',0)):.1f}",
-            "Risk Score (DB raw)":             f"{float(row.get('risk_raw',0)):.1f} / 100",
-            "EEC Zone":                        "✅ ใช่" if row["EEC"] else "❌ ไม่ใช่",
-            "Strategic Digital Province":      "✅ ใช่" if row["Strategic"] else "❌ ไม่ใช่",
+            "DC IT Load (MW)":                f"{float(row.get('dc_it_load_mw',0)):.1f}",
+            "Flood Risk":                     f"{float(row.get('flood_risk',0)):.1f} / 100",
+            "Seismic Risk":                   f"{float(row.get('seismic_risk',0)):.1f} / 100",
+            "EEC Zone":                       "✅ ใช่" if row["EEC"] else "❌ ไม่ใช่",
+            "Strategic Digital Province":     "✅ ใช่" if row["Strategic"] else "❌ ไม่ใช่",
         }
         st.table(pd.DataFrame(list(raw_items.items()), columns=["ตัวชี้วัด","ค่า"]))
 
 
-def render_welcome_panel(df_all):
-    st.markdown("""
+def render_6d_welcome(df_passed):
+    st.markdown(f"""
     <div class="welcome-box">
-      <div style="font-size:3rem;margin-bottom:10px">🗺️</div>
+      <div style="font-size:3rem;margin-bottom:10px">📊</div>
       <div style="font-size:1.35rem;font-weight:800;color:#0A1628;margin-bottom:8px">
-        เลือกจังหวัดเพื่อดู Scorecard
+        เลือกจังหวัดเพื่อดู 6D Scorecard
       </div>
       <div style="font-size:1.06rem;color:#555;line-height:1.8">
         เลือกจากช่อง Dropdown ด้านซ้าย<br>
-        หรือชี้เม้าส์บนแผนที่เพื่อดูคะแนน<br>
-        ข้อมูลครบ <b>77 จังหวัด</b>
+        หรือชี้เม้าส์ / คลิกบนแผนที่<br>
+        มีคะแนน 6D เฉพาะจังหวัดที่ผ่าน Gate (<b>{len(df_passed)} จังหวัด</b>)
       </div>
     </div>""", unsafe_allow_html=True)
 
     st.markdown('<div class="section-header" style="margin-top:16px">🏆 Top 5 จังหวัด</div>',
                 unsafe_allow_html=True)
-    top5 = df_all.head(5)
+    top5 = df_passed.sort_values("overall_score", ascending=False).head(5)
     clicked = None
     for _, row in top5.iterrows():
-        tc = TIER_FILL.get(row["tier"],"#888")
+        tc = tier_color(row["tier"])
         gc = GRADE_COLOR.get(str(row["grade"]).strip(),"#888")
         col_info, col_btn = st.columns([3,1])
         with col_info:
@@ -429,9 +595,6 @@ def render_welcome_panel(df_all):
     return clicked
 
 
-# ────────────────────────────────────────────────
-# RADAR COMPARE
-# ────────────────────────────────────────────────
 def render_radar(df_sel):
     colors = ["#1A9B6C","#2E75B6","#E07B00","#7B4FBF","#C0392B"]
     fig = go.Figure()
@@ -462,187 +625,193 @@ def main():
     <div class="topnav">
       <div>
         <div class="topnav-title">🗺️ Data Center Site Selection · Thailand</div>
-        <div class="topnav-sub">วิเคราะห์ความเหมาะสม 77 จังหวัด · เกณฑ์ v2.0</div>
+        <div class="topnav-sub">วิเคราะห์ความเหมาะสม 77 จังหวัด · Gate Criteria → 6D Assessment</div>
       </div>
     </div>""", unsafe_allow_html=True)
 
     try:
-        df_all = load_data()
-        geo    = load_geo()
+        df_gate = load_gate()
+        df_6d   = load_6d()
+        geo     = load_geo()
     except FileNotFoundError as e:
         st.error(f"❌ ไม่พบไฟล์: {e}"); st.stop()
 
-    # ── Session state ──
-    if "selected"     not in st.session_state: st.session_state.selected     = None
-    if "tier_filter"  not in st.session_state: st.session_state.tier_filter  = "ทั้งหมด"
-    if "score_min"    not in st.session_state: st.session_state.score_min    = 0
-    if "compare_list" not in st.session_state: st.session_state.compare_list = []
+    df_passed = df_6d[df_6d["passed_gate"]].copy()
+    st.session_state["passed_total"] = len(df_passed)
 
-    col_left, col_map, col_right = st.columns([2.0, 4.2, 2.6])
+    if "gate_selected" not in st.session_state: st.session_state.gate_selected = None
+    if "d6_selected"   not in st.session_state: st.session_state.d6_selected   = None
+    if "compare_list"  not in st.session_state: st.session_state.compare_list  = []
 
-    # ═══════ LEFT PANEL ═══════
-    with col_left:
-        st.markdown('<div class="filter-panel">', unsafe_allow_html=True)
-        st.markdown("#### 🔎 ค้นหาจังหวัด")
+    tab_gate, tab_6d = st.tabs(["🔒  ขั้นตอนที่ 1 — Gate Criteria", "📊  ขั้นตอนที่ 2 — 6D Assessment"])
 
-        all_provinces = ["— กรุณาเลือกจังหวัด —"] + df_all["province_name_th"].tolist()
-        cur_idx = 0
-        if st.session_state.selected in df_all["province_name_th"].tolist():
-            cur_idx = df_all["province_name_th"].tolist().index(st.session_state.selected) + 1
+    # ═══════════════════════ TAB 1: GATE ═══════════════════════
+    with tab_gate:
+        render_stepper("gate")
+        col_left, col_map, col_right = st.columns([2.0, 4.2, 2.6])
 
-        sel_dd = st.selectbox("เลือกจังหวัด (77 จังหวัด)", options=all_provinces,
-                              index=cur_idx, key="prov_dd")
-        if sel_dd != "— กรุณาเลือกจังหวัด —":
-            st.session_state.selected = sel_dd
+        with col_left:
+            st.markdown('<div class="filter-panel">', unsafe_allow_html=True)
+            st.markdown("#### 🔎 ค้นหาจังหวัด")
+            all_provinces = ["— กรุณาเลือกจังหวัด —"] + df_gate["province_name_th"].tolist()
+            cur_idx = 0
+            if st.session_state.gate_selected in df_gate["province_name_th"].tolist():
+                cur_idx = df_gate["province_name_th"].tolist().index(st.session_state.gate_selected) + 1
+            sel_dd = st.selectbox("เลือกจังหวัด (77 จังหวัด)", options=all_provinces,
+                                  index=cur_idx, key="gate_prov_dd")
+            if sel_dd != "— กรุณาเลือกจังหวัด —":
+                st.session_state.gate_selected = sel_dd
 
-        st.markdown("---")
-        st.markdown('<div class="section-header">Tier</div>', unsafe_allow_html=True)
-        tier_opts = ["ทั้งหมด","Tier 1 – Prime","Tier 2 – Suitable","Tier 3 – Conditional","Tier 4 – Not Recommended"]
-        tier_sel  = st.radio("", tier_opts, horizontal=False,
-                             label_visibility="collapsed", key="tier_radio")
-        st.session_state.tier_filter = tier_sel
+            st.markdown("---")
+            st.markdown('<div class="section-header">สถานะ Gate</div>', unsafe_allow_html=True)
+            gate_filter = st.radio("", ["ทั้งหมด","✅ ผ่าน Gate","❌ ไม่ผ่าน Gate"],
+                                   label_visibility="collapsed", key="gate_status_radio")
 
-        st.markdown('<div class="section-header">คะแนนขั้นต่ำ</div>', unsafe_allow_html=True)
-        min_score = st.slider("", 0, 80, st.session_state.score_min,
-                              key="score_slider", label_visibility="collapsed")
-        st.session_state.score_min = min_score
-
-        st.markdown('<div class="section-header">ตัวกรองเพิ่มเติม</div>', unsafe_allow_html=True)
-        eec_only  = st.checkbox("EEC Zone เท่านั้น")
-        strat_only= st.checkbox("Strategic Digital Province เท่านั้น")
-
-        if st.button("🔄 รีเซ็ตตัวกรอง", use_container_width=True):
-            st.session_state.tier_filter  = "ทั้งหมด"
-            st.session_state.score_min    = 0
-            st.session_state.selected     = None
-            st.session_state.compare_list = []
-            st.rerun()
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-        # Compare panel
-        st.markdown("---")
-        st.markdown("##### ⚖️ เปรียบเทียบจังหวัด")
-        compare_options = df_all["province_name_th"].tolist()
-        compare_sel = st.multiselect(
-            "เลือกสูงสุด 5 จังหวัด", compare_options,
-            default=st.session_state.compare_list[:5],
-            max_selections=5, key="compare_ms",
-            label_visibility="collapsed",
-        )
-        st.session_state.compare_list = compare_sel
-
-        if len(compare_sel) >= 2:
-            df_cmp = df_all[df_all["province_name_th"].isin(compare_sel)]
-            st.plotly_chart(render_radar(df_cmp), use_container_width=True)
-        else:
-            st.caption("เลือกอย่างน้อย 2 จังหวัดเพื่อดู Radar")
-
-    # ═══════ CENTER — MAP ═══════
-    with col_map:
-        # Apply filters for display count
-        df_filtered = df_all.copy()
-        if tier_sel != "ทั้งหมด":
-            df_filtered = df_filtered[df_filtered["tier"] == tier_sel]
-        df_filtered = df_filtered[df_filtered["overall_score"] >= min_score]
-        if eec_only:  df_filtered = df_filtered[df_filtered["EEC"]]
-        if strat_only: df_filtered = df_filtered[df_filtered["Strategic"]]
-
-        st.markdown(
-            f'<div style="font-size:.91rem;color:#888;margin-bottom:4px">'
-            f'🗺️ แสดง <b>{len(df_filtered)}</b> จาก 77 จังหวัด · '
-            f'คลิก <b>Marker ★</b> หรือเลือกจาก Dropdown เพื่อดู Scorecard</div>',
-            unsafe_allow_html=True)
-
-        m        = build_map(df_all, geo, st.session_state.selected)
-        map_data = st_folium(m, width="100%", height=510,
-                             returned_objects=["last_object_clicked_popup"])
-
-        # Detect map click
-        if map_data and map_data.get("last_object_clicked_popup"):
-            popup_text = map_data["last_object_clicked_popup"] or ""
-            for th in df_all["province_name_th"].tolist():
-                if th in popup_text:
-                    if st.session_state.selected != th:
-                        st.session_state.selected = th
-                        st.rerun()
-
-        # Summary card ของจังหวัดที่เลือก
-        sel = st.session_state.selected
-        if sel and sel in df_all["province_name_th"].values:
-            row_s = df_all[df_all["province_name_th"] == sel].iloc[0]
-            tc = TIER_FILL.get(row_s["tier"],"#888")
-            gc = GRADE_COLOR.get(str(row_s["grade"]).strip(),"#888")
+            n_pass = (df_gate["gate_status"]=="PASS").sum()
+            n_fail = len(df_gate) - n_pass
             st.markdown(f"""
-            <div style="background:white;border-radius:10px;padding:12px 16px;
-                        border:2px solid {tc};margin-top:6px">
-              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-                <div>
-                  <span style="font-size:1.18rem;font-weight:800;color:#0A1628">{sel}</span>
-                  <span style="font-size:.95rem;font-weight:400;color:#888"> {row_s['province_name_en']}</span><br>
-                  <span style="font-size:.94rem;color:#555">อันดับ <b>#{int(row_s['rank_overall'])}</b> · {row_s['region']}</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:10px">
-                  <div style="text-align:center">
-                    <div style="font-size:1.85rem;font-weight:800;color:{tc};line-height:1">{row_s['overall_score']:.2f}</div>
-                    <div style="font-size:.88rem;color:#888">Overall</div>
-                  </div>
-                  <div style="display:flex;flex-direction:column;gap:4px">
-                    <span style="background:{gc};color:white;padding:2px 10px;border-radius:10px;
-                                 font-size:.94rem;font-weight:700;text-align:center">Grade {row_s['grade']}</span>
-                    <span style="background:{tc};color:white;padding:2px 10px;border-radius:10px;
-                                 font-size:.9rem;font-weight:600;text-align:center">{row_s['tier']}</span>
-                  </div>
-                </div>
+            <div style="display:flex;gap:8px;margin-top:10px">
+              <div style="flex:1;background:#E6F7EF;border-radius:10px;padding:10px;text-align:center">
+                <div style="font-size:1.4rem;font-weight:800;color:#1A9B6C">{n_pass}</div>
+                <div style="font-size:.85rem;color:#555">ผ่าน Gate</div>
+              </div>
+              <div style="flex:1;background:#FFF0F0;border-radius:10px;padding:10px;text-align:center">
+                <div style="font-size:1.4rem;font-weight:800;color:#E04040">{n_fail}</div>
+                <div style="font-size:.85rem;color:#555">ไม่ผ่าน</div>
               </div>
             </div>""", unsafe_allow_html=True)
-        else:
-            st.markdown("""
-            <div style="background:#F5F8FC;border-radius:10px;padding:10px 16px;
-                        border:1px dashed #9DC3E6;margin-top:6px;font-size:.98rem;
-                        color:#888;text-align:center">
-              เลือกจังหวัดเพื่อดูข้อมูลสรุป
-            </div>""", unsafe_allow_html=True)
 
-    # ═══════ RIGHT — SCORECARD ═══════
-    with col_right:
-        sel = st.session_state.selected
-        if sel and sel in df_all["province_name_th"].values:
-            render_scorecard(df_all[df_all["province_name_th"] == sel].iloc[0])
-        else:
-            clicked = render_welcome_panel(df_all)
-            if clicked:
-                st.session_state.selected = clicked
+            if st.button("🔄 รีเซ็ต", use_container_width=True, key="gate_reset"):
+                st.session_state.gate_selected = None
                 st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
 
-    # ── BOTTOM FEATURE CARDS ──
-    st.divider()
-    feat_cols = st.columns(4)
-    feats = [
-        ("🔍","ค้นหาและเลือกพื้นที่",
-         "ค้นหา กรองตาม Tier, คะแนน, EEC Zone ครบ 77 จังหวัด"),
-        ("📊","เปรียบเทียบรายมิติ",
-         "Radar Chart 6 มิติ เปรียบเทียบได้สูงสุด 5 จังหวัดพร้อมกัน"),
-        ("🗺️","แผนที่เชิงโต้ตอบ",
-         "Choropleth แสดงระดับ Tier ทุกจังหวัด คลิกเพื่อดูรายละเอียด"),
-        ("📋","สนับสนุนการตัดสินใจ",
-         "Gate Pass / Under Review พร้อมจุดแข็ง-จุดอ่อน และข้อมูลดิบ"),
-    ]
-    for col, (icon, title, desc) in zip(feat_cols, feats):
-        col.markdown(f"""
-        <div class="feat-card">
-          <div class="feat-icon">{icon}</div>
-          <div class="feat-title">{title}</div>
-          <div class="feat-desc">{desc}</div>
-        </div>""", unsafe_allow_html=True)
+        with col_map:
+            df_filtered = df_gate.copy()
+            if gate_filter == "✅ ผ่าน Gate":
+                df_filtered = df_filtered[df_filtered["gate_status"]=="PASS"]
+            elif gate_filter == "❌ ไม่ผ่าน Gate":
+                df_filtered = df_filtered[df_filtered["gate_status"]=="FAIL"]
+
+            st.markdown(
+                f'<div style="font-size:.91rem;color:#888;margin-bottom:4px">'
+                f'🗺️ แสดง <b>{len(df_filtered)}</b> จาก 77 จังหวัด · '
+                f'คลิกบนแผนที่ หรือเลือกจาก Dropdown เพื่อดู Gate Checklist</div>',
+                unsafe_allow_html=True)
+
+            m = build_gate_map(df_gate, geo, st.session_state.gate_selected)
+            map_data = st_folium(m, width="100%", height=510,
+                                 key="gate_map", returned_objects=["last_object_clicked_popup"])
+
+            if map_data and map_data.get("last_object_clicked_popup"):
+                popup_text = map_data["last_object_clicked_popup"] or ""
+                for th in df_gate["province_name_th"].tolist():
+                    if th in popup_text:
+                        if st.session_state.gate_selected != th:
+                            st.session_state.gate_selected = th
+                            st.rerun()
+
+        with col_right:
+            sel = st.session_state.gate_selected
+            if sel and sel in df_gate["province_name_th"].values:
+                render_gate_scorecard(df_gate[df_gate["province_name_th"]==sel].iloc[0])
+            else:
+                render_gate_welcome(df_gate)
+
+    # ═══════════════════════ TAB 2: 6D ═══════════════════════
+    with tab_6d:
+        render_stepper("6d")
+        st.info(f"📌 คะแนน 6D Assessment คำนวณเฉพาะ **{len(df_passed)} จังหวัดที่ผ่าน Gate Criteria** "
+                f"แล้ว — จังหวัดที่ไม่ผ่าน ({len(df_6d)-len(df_passed)} จังหวัด) จัดเป็น **Tier 5** และไม่มีคะแนนรายมิติ")
+
+        col_left, col_map, col_right = st.columns([2.0, 4.2, 2.6])
+
+        with col_left:
+            st.markdown('<div class="filter-panel">', unsafe_allow_html=True)
+            st.markdown("#### 🔎 ค้นหาจังหวัด")
+            prov_list = df_passed.sort_values("overall_score", ascending=False)["province_name_th"].tolist()
+            all_provinces = ["— กรุณาเลือกจังหวัด —"] + prov_list
+            cur_idx = 0
+            if st.session_state.d6_selected in prov_list:
+                cur_idx = prov_list.index(st.session_state.d6_selected) + 1
+            sel_dd = st.selectbox(f"เลือกจังหวัด ({len(prov_list)} จังหวัดที่ผ่าน Gate)",
+                                  options=all_provinces, index=cur_idx, key="d6_prov_dd")
+            if sel_dd != "— กรุณาเลือกจังหวัด —":
+                st.session_state.d6_selected = sel_dd
+
+            st.markdown("---")
+            st.markdown('<div class="section-header">Tier</div>', unsafe_allow_html=True)
+            tier_opts = ["ทั้งหมด"] + sorted(df_passed["tier"].apply(tier_short).unique().tolist())
+            tier_sel  = st.radio("", tier_opts, label_visibility="collapsed", key="d6_tier_radio")
+
+            st.markdown('<div class="section-header">คะแนนขั้นต่ำ</div>', unsafe_allow_html=True)
+            min_score = st.slider("", 0, 80, 0, key="d6_score_slider", label_visibility="collapsed")
+
+            eec_only   = st.checkbox("EEC Zone เท่านั้น", key="d6_eec")
+            strat_only = st.checkbox("Strategic Digital Province เท่านั้น", key="d6_strat")
+
+            if st.button("🔄 รีเซ็ตตัวกรอง", use_container_width=True, key="d6_reset"):
+                st.session_state.d6_selected = None
+                st.session_state.compare_list = []
+                st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+
+            st.markdown("---")
+            st.markdown("##### ⚖️ เปรียบเทียบจังหวัด")
+            compare_sel = st.multiselect(
+                "เลือกสูงสุด 5 จังหวัด", prov_list,
+                default=st.session_state.compare_list[:5],
+                max_selections=5, key="d6_compare_ms", label_visibility="collapsed",
+            )
+            st.session_state.compare_list = compare_sel
+            if len(compare_sel) >= 2:
+                df_cmp = df_passed[df_passed["province_name_th"].isin(compare_sel)]
+                st.plotly_chart(render_radar(df_cmp), use_container_width=True)
+            else:
+                st.caption("เลือกอย่างน้อย 2 จังหวัดเพื่อดู Radar")
+
+        with col_map:
+            df_filtered = df_passed.copy()
+            if tier_sel != "ทั้งหมด":
+                df_filtered = df_filtered[df_filtered["tier"].apply(tier_short) == tier_sel]
+            df_filtered = df_filtered[df_filtered["overall_score"] >= min_score]
+            if eec_only:   df_filtered = df_filtered[df_filtered["EEC"]]
+            if strat_only: df_filtered = df_filtered[df_filtered["Strategic"]]
+
+            st.markdown(
+                f'<div style="font-size:.91rem;color:#888;margin-bottom:4px">'
+                f'🗺️ แสดง <b>{len(df_filtered)}</b> จาก {len(df_passed)} จังหวัดที่ผ่าน Gate · '
+                f'คลิกบนแผนที่ หรือเลือกจาก Dropdown เพื่อดู 6D Scorecard</div>',
+                unsafe_allow_html=True)
+
+            m = build_6d_map(df_6d, geo, st.session_state.d6_selected)
+            map_data = st_folium(m, width="100%", height=510,
+                                 key="d6_map", returned_objects=["last_object_clicked_popup"])
+
+            if map_data and map_data.get("last_object_clicked_popup"):
+                popup_text = map_data["last_object_clicked_popup"] or ""
+                for th in df_passed["province_name_th"].tolist():
+                    if th in popup_text:
+                        if st.session_state.d6_selected != th:
+                            st.session_state.d6_selected = th
+                            st.rerun()
+
+        with col_right:
+            sel = st.session_state.d6_selected
+            if sel and sel in df_passed["province_name_th"].values:
+                render_6d_scorecard(df_passed[df_passed["province_name_th"]==sel].iloc[0])
+            else:
+                clicked = render_6d_welcome(df_passed)
+                if clicked:
+                    st.session_state.d6_selected = clicked
+                    st.rerun()
 
     st.markdown("""
-    <div style="background:#F0F7FF;border-radius:8px;padding:10px 18px;margin-top:10px;
+    <div style="background:#F0F7FF;border-radius:8px;padding:10px 18px;margin-top:14px;
                 border-left:4px solid #2E75B6;font-size:.98rem;color:#333">
-      💡 <b>แนวทางการใช้งาน:</b>
-      คลิก Marker บนแผนที่ หรือเลือกจาก Dropdown เพื่อดู Scorecard รายมิติ
-      ใช้ Multiselect ด้านซ้ายล่างเพื่อเปรียบเทียบหลายจังหวัดพร้อมกัน
-      &nbsp;|&nbsp; <b>ข้อมูล 77 จังหวัด</b> · เกณฑ์ v2.0 · พลังงาน 35% + น้ำ 20% + บุคลากร 20% + BOI 7.5% + นิคม 7.5% + ความเสี่ยง 10%
+      💡 <b>แนวทางการใช้งาน:</b> เริ่มจากแท็บ <b>① Gate Criteria</b> เพื่อคัดกรองจังหวัดที่ผ่านเกณฑ์เบื้องต้น 6 ข้อ (ต้องผ่าน ≥3/6)
+      จากนั้นไปแท็บ <b>② 6D Assessment</b> เพื่อดูคะแนนรายมิติของจังหวัดที่ผ่าน Gate เท่านั้น
+      &nbsp;|&nbsp; พลังงาน 35% + น้ำ 20% + บุคลากร 20% + BOI 7.5% + นิคม 7.5% + ความเสี่ยง 10%
     </div>""", unsafe_allow_html=True)
 
 
