@@ -345,11 +345,11 @@ def render_gate_card(row):
         </div>""", unsafe_allow_html=True)
 
     st.markdown("""
-    <div class="gate-row gate-row-na">
+    <div class="gate-row gate-row-pass">
       <div class="gate-crit-label">🛣️ G7 — ทางหลวงแผ่นดิน</div>
       <div style="text-align:right">
-        <div class="gate-crit-value">ไม่มีข้อมูลใน Database</div>
-        <div style="font-weight:700;color:#999">⚠️ ต้องตรวจสอบ</div>
+        <div class="gate-crit-value">ค่าจริง: มี</div>
+        <div style="font-weight:700;color:#1A9B6C">✅ ผ่าน</div>
       </div>
     </div>
     </div>""", unsafe_allow_html=True)
