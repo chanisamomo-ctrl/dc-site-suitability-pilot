@@ -208,7 +208,7 @@ def load_geo():
 # ────────────────────────────────────────────────
 # MAP — combined: สีตาม Tier (Tier 5 = ไม่ผ่าน Gate)
 # ────────────────────────────────────────────────
-def build_map(df_6d, geo, selected_th):
+def build_map(df_6d, geo, selected_th, visible_set=None):
     m = folium.Map(location=[13.0, 101.5], zoom_start=6,
                    tiles="CartoDB positron", prefer_canvas=True)
 
@@ -248,6 +248,9 @@ def build_map(df_6d, geo, selected_th):
         row  = en_lookup.get(name)
         if row is None:
             return {"fillColor":"#E4ECF5","color":"#BBBBBB","weight":0.4,"fillOpacity":0.3}
+        # ไม่อยู่ในตัวกรองปัจจุบัน → จางเป็นสีเทาแทบมองไม่เห็น
+        if visible_set is not None and row["province_name_th"] not in visible_set:
+            return {"fillColor":"#EDEDED","color":"#DADADA","weight":0.4,"fillOpacity":0.18}
         color = tier_color(row["tier"]) if row["passed_gate"] else "#D8D8D8"
         if name == sel_en:
             return {"fillColor": color, "color":"#0A1628","weight":3.2,"fillOpacity":0.92}
@@ -613,7 +616,8 @@ def main():
             f'คลิกบนแผนที่ หรือเลือกจาก Dropdown เพื่อดูผลทั้ง 2 ส่วน</div>',
             unsafe_allow_html=True)
 
-        m = build_map(df_6d, geo, st.session_state.selected)
+        visible_set = set(df_filtered["province_name_th"].tolist())
+        m = build_map(df_6d, geo, st.session_state.selected, visible_set=visible_set)
         map_data = st_folium(m, width="100%", height=440,
                              key="main_map", returned_objects=["last_object_clicked_popup"])
 
