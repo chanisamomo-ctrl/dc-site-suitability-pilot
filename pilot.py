@@ -231,12 +231,12 @@ def build_map(df_6d, geo, selected_th, visible_set=None):
             feat["properties"]["province_th"]   = str(row["province_name_th"])
             feat["properties"]["overall_score"] = f"{row['overall_score']:.2f}"
             feat["properties"]["grade"]         = str(row["grade"])
-            feat["properties"]["gate_status_th"]= "✅ ผ่าน Gate"
+            feat["properties"]["gate_status_th"]= "✅ ผ่าน Gate Criteria"
         elif row is not None:
             feat["properties"]["province_th"]   = str(row["province_name_th"])
-            feat["properties"]["overall_score"] = "ไม่ผ่าน Gate"
+            feat["properties"]["overall_score"] = "ไม่ผ่าน Gate Criteria"
             feat["properties"]["grade"]         = "-"
-            feat["properties"]["gate_status_th"]= "❌ ไม่ผ่าน Gate"
+            feat["properties"]["gate_status_th"]= "❌ ไม่ผ่าน Gate Criteria"
         else:
             feat["properties"]["province_th"]   = en_name
             feat["properties"]["overall_score"] = "N/A"
@@ -251,7 +251,7 @@ def build_map(df_6d, geo, selected_th, visible_set=None):
         # ไม่อยู่ในตัวกรองปัจจุบัน → จางเป็นสีเทาแทบมองไม่เห็น
         if visible_set is not None and row["province_name_th"] not in visible_set:
             return {"fillColor":"#EDEDED","color":"#DADADA","weight":0.4,"fillOpacity":0.18}
-        color = tier_color(row["tier"]) if row["passed_gate"] else "#D8D8D8"
+        color = tier_color(row["tier"]) if row["passed_gate"] else "#F5B5B5"
         if name == sel_en:
             return {"fillColor": color, "color":"#0A1628","weight":3.2,"fillOpacity":0.92}
         return {"fillColor": color, "color":"#777","weight":0.5,
@@ -262,7 +262,7 @@ def build_map(df_6d, geo, selected_th, visible_set=None):
 
     tooltip = folium.GeoJsonTooltip(
         fields=["province_th","gate_status_th","overall_score","grade"],
-        aliases=["จังหวัด","Gate","คะแนนรวม","Grade"],
+        aliases=["จังหวัด","Gate Criteria","คะแนนรวม","Grade"],
         localize=True, sticky=False,
         style="""
             background-color:#0A1628;color:white;font-family:'Sarabun',sans-serif;
@@ -273,7 +273,7 @@ def build_map(df_6d, geo, selected_th, visible_set=None):
     )
     popup = folium.GeoJsonPopup(
         fields=["province_th","gate_status_th","overall_score","grade"],
-        aliases=["🏙️ จังหวัด","🔒 Gate","⭐ คะแนนรวม","Grade"],
+        aliases=["🏙️ จังหวัด","🔒 Gate Criteria","⭐ คะแนนรวม","Grade"],
         localize=True,
         style="font-family:'Sarabun',sans-serif;font-size:15px;line-height:1.9;min-width:200px;",
         max_width=260,
@@ -290,7 +290,7 @@ def build_map(df_6d, geo, selected_th, visible_set=None):
               <span style="color:#5BB8A4">■</span> Tier 2 – Suitable<br>
               <span style="color:#F0C040">■</span> Tier 3 – Conditional<br>
               <span style="color:#BBBBBB">■</span> Tier 4 – Not Recommended<br>
-              <span style="color:#D8D8D8">■</span> Tier 5 – ไม่ผ่าน Gate
+              <span style="color:#F5B5B5">■</span> Tier 5 – ไม่ผ่าน Gate Criteria
             </div>"""
     m.get_root().html.add_child(folium.Element(leg))
     return m
@@ -302,8 +302,8 @@ def build_map(df_6d, geo, selected_th, visible_set=None):
 def render_gate_card(row):
     passed = row["gate_status"] == "PASS"
     cnt    = int(row["gate_passed_count"])
-    badge  = "<span class='gate-pass'>✅ ผ่าน Gate</span>" if passed \
-             else "<span class='gate-no'>❌ ไม่ผ่าน Gate</span>"
+    badge  = "<span class='gate-pass'>✅ ผ่าน Gate Criteria</span>" if passed \
+             else "<span class='gate-no'>❌ ไม่ผ่าน Gate Criteria</span>"
 
     st.markdown(f"""
     <div class="result-card result-card-gate">
@@ -554,8 +554,8 @@ def main():
             st.session_state.selected = sel_dd
 
         st.markdown("---")
-        st.markdown('<div class="section-header">สถานะ Gate</div>', unsafe_allow_html=True)
-        gate_filter = st.radio("", ["ทั้งหมด","✅ ผ่าน Gate","❌ ไม่ผ่าน Gate"],
+        st.markdown('<div class="section-header">สถานะ Gate Criteria</div>', unsafe_allow_html=True)
+        gate_filter = st.radio("", ["ทั้งหมด","✅ ผ่าน Gate Criteria","❌ ไม่ผ่าน Gate Criteria"],
                                label_visibility="collapsed", key="gate_status_radio")
 
         n_pass = (df_gate["gate_status"]=="PASS").sum()
@@ -564,7 +564,7 @@ def main():
         <div style="display:flex;gap:10px;margin-top:10px;margin-bottom:6px">
           <div style="flex:1;background:#E6F7EF;border-radius:10px;padding:12px;text-align:center">
             <div style="font-size:1.6rem;font-weight:800;color:#1A9B6C">{n_pass}</div>
-            <div style="font-size:.92rem;color:#555">ผ่าน Gate</div>
+            <div style="font-size:.92rem;color:#555">ผ่าน Gate Criteria</div>
           </div>
           <div style="flex:1;background:#FFF0F0;border-radius:10px;padding:12px;text-align:center">
             <div style="font-size:1.6rem;font-weight:800;color:#E04040">{n_fail}</div>
@@ -602,9 +602,9 @@ def main():
     # ═══════ CENTER — MAP ═══════
     with col_map:
         df_filtered = df_6d.merge(df_gate[["province_name_th","gate_status"]], on="province_name_th", how="left")
-        if gate_filter == "✅ ผ่าน Gate":
+        if gate_filter == "✅ ผ่าน Gate Criteria":
             df_filtered = df_filtered[df_filtered["gate_status"]=="PASS"]
-        elif gate_filter == "❌ ไม่ผ่าน Gate":
+        elif gate_filter == "❌ ไม่ผ่าน Gate Criteria":
             df_filtered = df_filtered[df_filtered["gate_status"]=="FAIL"]
         df_filtered = df_filtered[df_filtered["overall_score"].fillna(0) >= min_score]
         if eec_only:   df_filtered = df_filtered[df_filtered["EEC"]]
