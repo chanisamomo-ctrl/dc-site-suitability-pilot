@@ -31,6 +31,10 @@ html { font-size: 21px; }
 *, body, .stApp, [class*="st-"], [data-testid] {
     font-family: 'DB Heavent', 'Sarabun', 'Noto Sans Thai', sans-serif !important;
 }
+/* คืน font icon ของ Streamlit (ลูกศร expander ฯลฯ) ไม่ให้โดน override จนกลายเป็นตัวอักษรซ้อน */
+[data-testid="stIconMaterial"], [data-testid*="Icon"], span[data-testid="stIconMaterial"] {
+    font-family: 'Material Symbols Rounded' !important;
+}
 #MainMenu, footer, header {visibility: hidden;}
 .block-container {padding-top: 0rem; padding-bottom: 0.5rem;}
 
@@ -531,7 +535,7 @@ def main():
     if "selected"     not in st.session_state: st.session_state.selected     = None
     if "compare_list" not in st.session_state: st.session_state.compare_list = []
 
-    col_left, col_map = st.columns([2.1, 5.0])
+    col_left, col_map = st.columns([1.8, 6.0])
 
     # ═══════ LEFT — FILTER ═══════
     with col_left:
@@ -610,7 +614,7 @@ def main():
             unsafe_allow_html=True)
 
         m = build_map(df_6d, geo, st.session_state.selected)
-        map_data = st_folium(m, width="100%", height=520,
+        map_data = st_folium(m, width="100%", height=440,
                              key="main_map", returned_objects=["last_object_clicked_popup"])
 
         if map_data and map_data.get("last_object_clicked_popup"):
@@ -621,28 +625,28 @@ def main():
                         st.session_state.selected = th
                         st.rerun()
 
-    # ═══════ BOTTOM — GATE + 6D SIDE BY SIDE ═══════
-    st.markdown("---")
-    sel = st.session_state.selected
-    if sel and sel in df_gate["province_name_th"].values:
-        gate_row = df_gate[df_gate["province_name_th"]==sel].iloc[0]
-        d6_row   = df_6d[df_6d["province_name_th"]==sel].iloc[0]
+        # ═══════ ผลลัพธ์ — อยู่ใต้แผนที่ในคอลัมน์เดียวกัน ═══════
+        st.markdown("---")
+        sel = st.session_state.selected
+        if sel and sel in df_gate["province_name_th"].values:
+            gate_row = df_gate[df_gate["province_name_th"]==sel].iloc[0]
+            d6_row   = df_6d[df_6d["province_name_th"]==sel].iloc[0]
 
-        st.markdown(f"""
-        <div style="font-size:1.6rem;font-weight:800;color:#0A1628;margin-bottom:4px">
-          📍 {sel} <span style="font-size:1.05rem;color:#888;font-weight:400">{gate_row['province_name_en']} · {gate_row['region']}</span>
-        </div>""", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div style="font-size:1.6rem;font-weight:800;color:#0A1628;margin-bottom:4px">
+              📍 {sel} <span style="font-size:1.05rem;color:#888;font-weight:400">{gate_row['province_name_en']} · {gate_row['region']}</span>
+            </div>""", unsafe_allow_html=True)
 
-        col_gate, col_6d = st.columns(2)
-        with col_gate:
-            render_gate_card(gate_row)
-        with col_6d:
-            render_6d_card(d6_row, len(df_passed))
-    else:
-        clicked = render_welcome(df_gate, df_passed)
-        if clicked:
-            st.session_state.selected = clicked
-            st.rerun()
+            col_gate, col_6d = st.columns(2)
+            with col_gate:
+                render_gate_card(gate_row)
+            with col_6d:
+                render_6d_card(d6_row, len(df_passed))
+        else:
+            clicked = render_welcome(df_gate, df_passed)
+            if clicked:
+                st.session_state.selected = clicked
+                st.rerun()
 
     st.markdown("""
     <div style="background:#F0F7FF;border-radius:8px;padding:12px 20px;margin-top:16px;
