@@ -168,6 +168,18 @@ def tier_short(tier_str):
     t = str(tier_str)
     return t.split("(")[0].strip()
 
+# ชื่อ EN ใน CSV ที่เขียนต่างจาก GeoJSON (thailand.json)
+GEO_NAME_FIX = {
+    "Bangkok":      "Bangkok Metropolis",
+    "Chonburi":     "Chon Buri",
+    "Chainat":      "Chai Nat",
+    "Lopburi":      "Lop Buri",
+    "Phang Nga":    "Phangnga",
+    "Prachinburi":  "Prachin Buri",
+}
+def to_geo_name(en_name):
+    return GEO_NAME_FIX.get(en_name, en_name)
+
 # ────────────────────────────────────────────────
 # DATA
 # ────────────────────────────────────────────────
@@ -214,16 +226,14 @@ def build_gate_map(df_all, geo, selected_th):
 
     en_lookup = {}
     for _, row in df_all.iterrows():
-        en = str(row["province_name_en"])
-        if en == "Bangkok": en = "Bangkok Metropolis"
+        en = to_geo_name(str(row["province_name_en"]))
         en_lookup[en] = row
 
     sel_en = None
     if selected_th:
         r = df_all[df_all["province_name_th"] == selected_th]
         if len(r):
-            sel_en = str(r.iloc[0]["province_name_en"])
-            if sel_en == "Bangkok": sel_en = "Bangkok Metropolis"
+            sel_en = to_geo_name(str(r.iloc[0]["province_name_en"]))
 
     geo_enriched = copy.deepcopy(geo)
     for feat in geo_enriched["features"]:
@@ -373,16 +383,14 @@ def build_6d_map(df_all, geo, selected_th):
 
     en_lookup = {}
     for _, row in df_all.iterrows():
-        en = str(row["province_name_en"])
-        if en == "Bangkok": en = "Bangkok Metropolis"
+        en = to_geo_name(str(row["province_name_en"]))
         en_lookup[en] = row
 
     sel_en = None
     if selected_th:
         r = df_all[df_all["province_name_th"] == selected_th]
         if len(r):
-            sel_en = str(r.iloc[0]["province_name_en"])
-            if sel_en == "Bangkok": sel_en = "Bangkok Metropolis"
+            sel_en = to_geo_name(str(r.iloc[0]["province_name_en"]))
 
     geo_enriched = copy.deepcopy(geo)
     for feat in geo_enriched["features"]:
