@@ -527,7 +527,7 @@ def render_6d_card(row, passed_total):
 
     st.markdown(f"""
     <div class="result-card result-card-6d">
-      <div class="panel-title">📊 6D Assessment (V1 — Readiness)</div>
+      <div class="panel-title">📊 6D Assessment</div>
       <div style="font-size:1.05rem;color:#555;margin-bottom:10px">
         อันดับ <b>#{rank}</b> จาก {passed_total} จังหวัดที่ผ่าน Gate
       </div>
@@ -535,7 +535,7 @@ def render_6d_card(row, passed_total):
 
     st.markdown(f"""
     <div class="score-box">
-      <div class="score-label">คะแนน Readiness (Overall Score)</div>
+      <div class="score-label">คะแนนรวม (Overall Score)</div>
       <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-top:4px">
         <div class="score-big">{score:.2f}</div>
         <div style="padding-bottom:6px;display:flex;flex-direction:column;gap:6px">
@@ -603,7 +603,7 @@ def render_opportunity_card(row):
 
     st.markdown(f"""
     <div class="result-card result-card-oppty">
-      <div class="panel-title">🔮 Opportunity Score (V2)</div>
+      <div class="panel-title">🔮 Opportunity Score</div>
       <div style="font-size:1.05rem;color:#555;margin-bottom:10px">
         อันดับ <b>#{opp_rank}</b> จาก 77 จังหวัด (ทุกจังหวัดมีคะแนน)
       </div>
@@ -663,7 +663,7 @@ def render_balance_card(row):
 
     st.markdown(f"""
     <div class="result-card result-card-balance">
-      <div class="panel-title">⚖️ Balance Score (V2)</div>
+      <div class="panel-title">⚖️ Balance Score</div>
       <div style="margin-bottom:10px">
         <span style="background:{q_color};color:white;padding:7px 18px;border-radius:22px;
                      font-size:1.05rem;font-weight:700">{q_name}</span>
@@ -693,8 +693,8 @@ def render_balance_card(row):
 
     # Mini comparison bars
     for label, val, color in [
-        ("📊 Readiness Score (V1)", readiness, "#2E75B6"),
-        ("🔮 Opportunity Score (V2)", opp, "#6C47FF"),
+        ("📊 Readiness Score", readiness, "#2E75B6"),
+        ("🔮 Opportunity Score", opp, "#6C47FF"),
         ("⚖️ Balance Score", balance, "#E07B00"),
     ]:
         st.markdown(f"""
@@ -825,10 +825,10 @@ def render_balance_quadrant(df_all: pd.DataFrame, highlight_th: str | None = Non
     fig.update_layout(
         shapes=all_shapes,
         annotations=annotations,
-        xaxis=dict(title="Readiness Score (0–100)  ← V1 6D Score →",
+        xaxis=dict(title="Readiness Score (0–100)",
                    range=[0,100], zeroline=False, gridcolor="#EEEEEE",
                    tickfont=dict(size=12)),
-        yaxis=dict(title="Opportunity Score (0–100)  ← V2 →",
+        yaxis=dict(title="Opportunity Score (0–100)",
                    range=[0,100], zeroline=False, gridcolor="#EEEEEE",
                    tickfont=dict(size=12)),
         legend=dict(orientation="h", y=-0.15, font=dict(size=12)),
@@ -884,7 +884,7 @@ def render_welcome(df_gate, df_passed):
       </div>
     </div>""", unsafe_allow_html=True)
 
-    st.markdown('<div class="section-header" style="margin-top:18px">🏆 Top 5 Balance Score (V2)</div>',
+    st.markdown('<div class="section-header" style="margin-top:18px">🏆 Top 5 Balance Score</div>',
                 unsafe_allow_html=True)
     top5 = df_passed.sort_values("balance_score", ascending=False).head(5)
     clicked = None
@@ -923,7 +923,6 @@ def main():
         <div class="topnav-title">🗺️ Data Center Site Selection · Thailand</div>
         <div class="topnav-sub">Gate Criteria · 6D Readiness · Opportunity Score · Balance Quadrant</div>
       </div>
-      <div class="version-badge">V 2.0</div>
     </div>""", unsafe_allow_html=True)
 
     try:
@@ -1003,8 +1002,8 @@ def main():
     with col_main:
         tab_map, tab_quad, tab_rank = st.tabs([
             "🗺️ แผนที่ + Province Detail",
-            "⚖️ Balance Quadrant (V2)",
-            "🏆 Balance Ranking (V2)",
+            "⚖️ Balance Quadrant",
+            "🏆 Balance Ranking",
         ])
 
         # ─── TAB 1: MAP + PROVINCE DETAIL ───
@@ -1077,10 +1076,10 @@ def main():
             st.markdown("""
             <div style="background:#F3EEFF;border-radius:12px;padding:14px 20px;
                         border-left:4px solid #6C47FF;margin-bottom:16px;font-size:1.05rem">
-              <b style="color:#6C47FF">⚖️ Balance Quadrant (V2 Concept)</b><br>
+              <b style="color:#6C47FF">⚖️ Balance Quadrant</b><br>
               <span style="color:#444">
-                แกน X = Readiness Score (6D, V1) — ยิ่งสูง ยิ่งพร้อม ภาระน้อย<br>
-                แกน Y = Opportunity Score (V2) — ยิ่งสูง ยิ่งมีโอกาสเติบโต<br>
+                แกน X = Readiness Score (6D) — ยิ่งสูง ยิ่งพร้อม ภาระน้อย<br>
+                แกน Y = Opportunity Score — ยิ่งสูง ยิ่งมีโอกาสเติบโต<br>
                 จุดกึ่งกลาง = 50 คะแนน · ★ = จังหวัดที่เลือกอยู่
               </span>
             </div>""", unsafe_allow_html=True)
@@ -1121,7 +1120,7 @@ def main():
             <div style="background:#FFFBF0;border-left:3px solid #D0700A;border-radius:6px;
                         padding:10px 16px;margin-top:14px;font-size:.95rem;color:#555">
               ⚠️ <b>หมายเหตุ:</b> Opportunity Score คำนวณจากข้อมูล proxy (ติดตั้ง MW, กักเก็บน้ำ,
-              สถาบันการศึกษา, BOI/IEAT, EEC) — เป็นตัวชี้วัดเชิงแนวคิด (V2 Concept)
+              สถาบันการศึกษา, BOI/IEAT, EEC) — เป็นตัวชี้วัดเชิงแนวคิด
               ตามกรอบของ Teachavorasinskun (2025) ยังไม่ใช่ผลวิเคราะห์จริง
             </div>""", unsafe_allow_html=True)
 
@@ -1130,7 +1129,7 @@ def main():
             st.markdown("""
             <div style="background:#FFF8F0;border-radius:12px;padding:14px 20px;
                         border-left:4px solid #E07B00;margin-bottom:16px;font-size:1.05rem">
-              <b style="color:#E07B00">🏆 Balance Score Ranking</b> — อันดับจังหวัดตาม Balance Score (V2)<br>
+              <b style="color:#E07B00">🏆 Balance Score Ranking</b> — อันดับจังหวัดตาม Balance Score<br>
               <span style="color:#444">Balance Score = Readiness {:.0f}% + Opportunity {:.0f}%</span>
             </div>""".format(BALANCE_WEIGHT_READINESS*100, BALANCE_WEIGHT_OPPORTUNITY*100),
             unsafe_allow_html=True)
@@ -1181,13 +1180,6 @@ def main():
                         st.session_state.selected = row["province_name_th"]
                         st.rerun()
 
-    st.markdown("""
-    <div style="background:#F3EEFF;border-radius:8px;padding:12px 20px;margin-top:16px;
-                border-left:4px solid #6C47FF;font-size:1.04rem;color:#333">
-      💡 <b>V2 — Balance Score</b> = Readiness (6D) × 60% + Opportunity × 40%
-      &nbsp;|&nbsp; Opportunity = พลังงาน 30% + น้ำ 25% + บุคลากร 20% + ธุรกิจ 15% + นโยบาย 10%
-      &nbsp;|&nbsp; <b>แนวคิดตาม Teachavorasinskun (2025) Chapter 6</b>
-    </div>""", unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
