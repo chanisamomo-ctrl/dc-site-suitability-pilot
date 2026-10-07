@@ -348,12 +348,13 @@ def compute_opportunity(df_6d: pd.DataFrame) -> pd.DataFrame:
 # MAP (same as V1 — color by Tier)
 # ────────────────────────────────────────────────
 def build_map(df_6d, geo, selected_th, visible_set=None):
-    m = folium.Map(location=[13.0, 101.5], zoom_start=6, prefer_canvas=True)
+    m = folium.Map(location=[13.0, 101.5], zoom_start=6,
+                   tiles=None, prefer_canvas=True)
     folium.TileLayer(
-        tiles="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-        attr='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        name="CartoDB Positron",
-        max_zoom=19,
+        tiles="https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        attr='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        name="OpenStreetMap",
+        opacity=0.18,
     ).add_to(m)
 
     en_lookup = {}
