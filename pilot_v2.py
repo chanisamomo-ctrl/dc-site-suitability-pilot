@@ -30,7 +30,7 @@ st.set_page_config(
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700;800&display=swap');
-html { font-size: 21px; }
+html { font-size: 26px; }
 *, body, .stApp, [class*="st-"], [data-testid] {
     font-family: 'DB Heavent', 'Sarabun', 'Noto Sans Thai', sans-serif !important;
 }
