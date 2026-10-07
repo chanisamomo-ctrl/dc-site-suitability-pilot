@@ -811,8 +811,14 @@ def render_balance_quadrant(df_all: pd.DataFrame, highlight_th: str | None = Non
                 legendgroup="selected",
             ))
 
+    all_shapes = shapes + [
+        dict(type="line", x0=50, x1=50, y0=0, y1=100,
+             line=dict(color="#AAAAAA", width=1.5, dash="dash")),
+        dict(type="line", x0=0, x1=100, y0=50, y1=50,
+             line=dict(color="#AAAAAA", width=1.5, dash="dash")),
+    ]
     fig.update_layout(
-        shapes=shapes,
+        shapes=all_shapes,
         annotations=annotations,
         xaxis=dict(title="Readiness Score (0–100)  ← V1 6D Score →",
                    range=[0,100], zeroline=False, gridcolor="#EEEEEE",
@@ -820,13 +826,6 @@ def render_balance_quadrant(df_all: pd.DataFrame, highlight_th: str | None = Non
         yaxis=dict(title="Opportunity Score (0–100)  ← V2 →",
                    range=[0,100], zeroline=False, gridcolor="#EEEEEE",
                    tickfont=dict(size=12)),
-        # Divider lines at 50
-        shapes=shapes + [
-            dict(type="line", x0=50, x1=50, y0=0, y1=100,
-                 line=dict(color="#AAAAAA", width=1.5, dash="dash")),
-            dict(type="line", x0=0, x1=100, y0=50, y1=50,
-                 line=dict(color="#AAAAAA", width=1.5, dash="dash")),
-        ],
         legend=dict(orientation="h", y=-0.15, font=dict(size=12)),
         height=520,
         margin=dict(l=60, r=20, t=40, b=80),
